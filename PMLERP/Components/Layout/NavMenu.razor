@@ -1,0 +1,802 @@
+﻿@* NavMenu.razor - System Administrator Version *@
+
+@inject NavigationManager NavigationManager
+
+@code {
+	[Parameter]
+	public bool IsCollapsed { get; set; }
+
+	private string currentUri = "";
+	private bool tenantMenuOpen = false;
+	private bool userRoleMenuOpen = false;
+	private bool moduleMenuOpen = false;
+	private bool settingsMenuOpen = false;
+	private bool billingMenuOpen = false;
+	private bool logsMenuOpen = false;
+	private bool securityMenuOpen = false;
+	private bool reportsMenuOpen = false;
+
+	protected override void OnInitialized()
+	{
+		currentUri = NavigationManager.Uri;
+
+		// Auto-expand section based on current URL
+		var path = NavigationManager.ToBaseRelativePath(currentUri).ToLower();
+
+		if (path.StartsWith("tenant") || path.StartsWith("clients"))
+		{
+			tenantMenuOpen = true;
+		}
+		else if (path.StartsWith("users") || path.StartsWith("roles") || path.StartsWith("permissions"))
+		{
+			userRoleMenuOpen = true;
+		}
+		else if (path.StartsWith("modules") || path.StartsWith("menu"))
+		{
+			moduleMenuOpen = true;
+		}
+		else if (path.StartsWith("settings") || path.StartsWith("global") || path.StartsWith("branding"))
+		{
+			settingsMenuOpen = true;
+		}
+		else if (path.StartsWith("billing") || path.StartsWith("subscription") || path.StartsWith("payments"))
+		{
+			billingMenuOpen = true;
+		}
+		else if (path.StartsWith("logs") || path.StartsWith("monitoring") || path.StartsWith("audit"))
+		{
+			logsMenuOpen = true;
+		}
+		else if (path.StartsWith("security") || path.StartsWith("backup") || path.StartsWith("utilities"))
+		{
+			securityMenuOpen = true;
+		}
+		else if (path.StartsWith("reports") || path.StartsWith("analytics"))
+		{
+			reportsMenuOpen = true;
+		}
+	}
+
+	private void ToggleSubmenu(string menu)
+	{
+		switch (menu)
+		{
+			case "tenant":
+				tenantMenuOpen = !tenantMenuOpen;
+				break;
+			case "userrole":
+				userRoleMenuOpen = !userRoleMenuOpen;
+				break;
+			case "module":
+				moduleMenuOpen = !moduleMenuOpen;
+				break;
+			case "settings":
+				settingsMenuOpen = !settingsMenuOpen;
+				break;
+			case "billing":
+				billingMenuOpen = !billingMenuOpen;
+				break;
+			case "logs":
+				logsMenuOpen = !logsMenuOpen;
+				break;
+			case "security":
+				securityMenuOpen = !securityMenuOpen;
+				break;
+			case "reports":
+				reportsMenuOpen = !reportsMenuOpen;
+				break;
+		}
+	}
+
+	private bool IsActive(string href)
+	{
+		return NavigationManager.ToBaseRelativePath(currentUri).ToLower()
+			.StartsWith(href.TrimStart('/').ToLower());
+	}
+}
+
+<div class="sidebar-container h-100">
+    <!-- System Admin Brand Area -->
+    <div class="sidebar-header">
+        @if (!IsCollapsed)
+		{
+				<div class="sidebar-brand">
+					<i class="bi bi-gem brand-icon"></i>
+					<div class="brand-text">
+						<div class="brand-name">Jewel ERP</div>
+						<div class="brand-tagline">Jewelry Management</div>
+					</div>
+				</div>
+		}
+		else
+		{
+				<div class="sidebar-brand-collapsed">
+					<i class="bi bi-gem brand-icon"></i>
+				</div>
+		}
+	</div>
+
+	<!-- System Admin Navigation Menu -->
+	<div class="sidebar-menu">
+		<!-- Dashboard -->
+		<NavLink class="nav-item" href="" Match="NavLinkMatch.All">
+			<div class="nav-icon" title="Dashboard">
+				<i class="bi bi-speedometer2"></i>
+			</div>
+			@if (!IsCollapsed)
+			{
+					<span class="nav-text">Dashboard</span>
+			}
+		</NavLink>
+
+		<!-- Tenant Management Section -->
+		<div class="nav-section">
+			@if (!IsCollapsed)
+			{
+					<div class="nav-section-header @(tenantMenuOpen ? "active" : "")" onclick="@(() => ToggleSubmenu("tenant"))">
+						<div class="d-flex align-items-center">
+							<div class="nav-icon">
+								<i class="bi bi-building"></i>
+							</div>
+							<span class="nav-text">Tenant Management</span>
+						</div>
+						<i class="bi @(tenantMenuOpen ? "bi-chevron-down" : "bi-chevron-right") nav-arrow"></i>
+					</div>
+
+				@if (tenantMenuOpen)
+				{
+							<div class="submenu">
+								<NavLink class="nav-item submenu-item" href="tenants/create">
+									<div class="nav-icon">
+										<i class="bi bi-plus-circle"></i>
+									</div>
+									<span class="nav-text">Create Tenant</span>
+								</NavLink>
+								<NavLink class="nav-item submenu-item" href="tenants/manage">
+									<div class="nav-icon">
+										<i class="bi bi-pencil-square"></i>
+									</div>
+									<span class="nav-text">Manage Tenants</span>
+								</NavLink>
+								<NavLink class="nav-item submenu-item" href="tenants/activation">
+									<div class="nav-icon">
+										<i class="bi bi-toggle-on"></i>
+									</div>
+									<span class="nav-text">Activate/Deactivate</span>
+								</NavLink>
+								<NavLink class="nav-item submenu-item" href="tenants/modules">
+									<div class="nav-icon">
+										<i class="bi bi-grid-3x3-gap"></i>
+									</div>
+									<span class="nav-text">Assign Modules</span>
+								</NavLink>
+							</div>
+				}
+			}
+			else
+			{
+					<div class="nav-section-header" onclick="@(() => ToggleSubmenu("tenant"))">
+							<div class="nav-icon" title="Tenenat Management">
+							<i class="bi bi-building"></i>
+						</div>
+					</div>
+			}
+		</div>
+
+		<!-- User & Role Management -->
+		<div class="nav-section">
+			@if (!IsCollapsed)
+			{
+					<div class="nav-section-header @(userRoleMenuOpen ? "active" : "")" onclick="@(() => ToggleSubmenu("userrole"))">
+						<div class="d-flex align-items-center">
+							<div class="nav-icon">
+								<i class="bi bi-people-fill"></i>
+							</div>
+							<span class="nav-text">User & Role Management</span>
+						</div>
+						<i class="bi @(userRoleMenuOpen ? "bi-chevron-down" : "bi-chevron-right") nav-arrow"></i>
+					</div>
+
+				@if (userRoleMenuOpen)
+				{
+							<div class="submenu">
+								<NavLink class="nav-item submenu-item" href="users/admin">
+									<div class="nav-icon">
+										<i class="bi bi-person-gear"></i>
+									</div>
+									<span class="nav-text">Admin Users</span>
+								</NavLink>
+								<NavLink class="nav-item submenu-item" href="roles/create">
+									<div class="nav-icon">
+										<i class="bi bi-shield-plus"></i>
+									</div>
+									<span class="nav-text">Role Creation</span>
+								</NavLink>
+								<NavLink class="nav-item submenu-item" href="permissions/mapping">
+									<div class="nav-icon">
+										<i class="bi bi-diagram-3"></i>
+									</div>
+									<span class="nav-text">Permission Mapping</span>
+								</NavLink>
+								<NavLink class="nav-item submenu-item" href="roles/assign">
+									<div class="nav-icon">
+										<i class="bi bi-person-check"></i>
+									</div>
+									<span class="nav-text">Assign Roles</span>
+								</NavLink>
+							</div>
+				}
+			}
+			else
+			{
+					<div class="nav-section-header" onclick="@(() => ToggleSubmenu("userrole"))">
+							<div class="nav-icon" title="User & Role Management">
+							<i class="bi bi-people-fill"></i>
+						</div>
+					</div>
+			}
+		</div>
+
+		<!-- Module & Menu Configuration -->
+		<div class="nav-section">
+			@if (!IsCollapsed)
+			{
+					<div class="nav-section-header @(moduleMenuOpen ? "active" : "")" onclick="@(() => ToggleSubmenu("module"))">
+						<div class="d-flex align-items-center">
+							<div class="nav-icon">
+								<i class="bi bi-grid-3x3-gap-fill"></i>
+							</div>
+							<span class="nav-text">Module & Menu Config</span>
+						</div>
+						<i class="bi @(moduleMenuOpen ? "bi-chevron-down" : "bi-chevron-right") nav-arrow"></i>
+					</div>
+
+				@if (moduleMenuOpen)
+				{
+							<div class="submenu">
+								<NavLink class="nav-item submenu-item" href="modules/setup">
+									<div class="nav-icon">
+										<i class="bi bi-puzzle"></i>
+									</div>
+									<span class="nav-text">Modules Setup</span>
+								</NavLink>
+								<NavLink class="nav-item submenu-item" href="menus/master">
+									<div class="nav-icon">
+										<i class="bi bi-list-ul"></i>
+									</div>
+									<span class="nav-text">Menu Master</span>
+								</NavLink>
+								<NavLink class="nav-item submenu-item" href="menus/template">
+									<div class="nav-icon">
+										<i class="bi bi-layout-text-window-reverse"></i>
+									</div>
+									<span class="nav-text">Menu Template</span>
+								</NavLink>
+								<NavLink class="nav-item submenu-item" href="menus/user-template">
+									<div class="nav-icon">
+										<i class="bi bi-person-lines-fill"></i>
+									</div>
+									<span class="nav-text">User Menu Template</span>
+								</NavLink>
+							</div>
+				}
+			}
+			else
+			{
+					<div class="nav-section-header" onclick="@(() => ToggleSubmenu("module"))">
+							<div class="nav-icon" title="Module & Menu Config">
+							<i class="bi bi-grid-3x3-gap-fill"></i>
+						</div>
+					</div>
+			}
+		</div>
+
+		<!-- Global Settings -->
+		<div class="nav-section">
+			@if (!IsCollapsed)
+			{
+					<div class="nav-section-header @(settingsMenuOpen ? "active" : "")" onclick="@(() => ToggleSubmenu("settings"))">
+						<div class="d-flex align-items-center">
+							<div class="nav-icon">
+								<i class="bi bi-globe2"></i>
+							</div>
+							<span class="nav-text">Global Settings</span>
+						</div>
+						<i class="bi @(settingsMenuOpen ? "bi-chevron-down" : "bi-chevron-right") nav-arrow"></i>
+					</div>
+
+				@if (settingsMenuOpen)
+				{
+							<div class="submenu">
+								<NavLink class="nav-item submenu-item" href="settings/system">
+									<div class="nav-icon">
+										<i class="bi bi-gear-wide-connected"></i>
+									</div>
+									<span class="nav-text">System Defaults</span>
+								</NavLink>
+								<NavLink class="nav-item submenu-item" href="settings/templates">
+									<div class="nav-icon">
+										<i class="bi bi-file-earmark-text"></i>
+									</div>
+									<span class="nav-text">Invoice Templates</span>
+								</NavLink>
+								<NavLink class="nav-item submenu-item" href="settings/branding">
+									<div class="nav-icon">
+										<i class="bi bi-palette"></i>
+									</div>
+									<span class="nav-text">Branding</span>
+								</NavLink>
+								<NavLink class="nav-item submenu-item" href="settings/notifications">
+									<div class="nav-icon">
+										<i class="bi bi-bell-fill"></i>
+									</div>
+									<span class="nav-text">Notifications</span>
+								</NavLink>
+							</div>
+				}
+			}
+			else
+			{
+					<div class="nav-section-header" onclick="@(() => ToggleSubmenu("settings"))">
+							<div class="nav-icon" title="Global Settings">
+							<i class="bi bi-globe2"></i>
+						</div>
+					</div>
+			}
+		</div>
+
+		<!-- Billing & Subscription -->
+		<div class="nav-section">
+			@if (!IsCollapsed)
+			{
+					<div class="nav-section-header @(billingMenuOpen ? "active" : "")" onclick="@(() => ToggleSubmenu("billing"))">
+						<div class="d-flex align-items-center">
+							<div class="nav-icon">
+								<i class="bi bi-credit-card-fill"></i>
+							</div>
+							<span class="nav-text">Billing & Subscription</span>
+						</div>
+						<i class="bi @(billingMenuOpen ? "bi-chevron-down" : "bi-chevron-right") nav-arrow"></i>
+					</div>
+
+				@if (billingMenuOpen)
+				{
+							<div class="submenu">
+								<NavLink class="nav-item submenu-item" href="billing/plans">
+									<div class="nav-icon">
+										<i class="bi bi-card-list"></i>
+									</div>
+									<span class="nav-text">Subscription Plans</span>
+								</NavLink>
+								<NavLink class="nav-item submenu-item" href="billing/assign">
+									<div class="nav-icon">
+										<i class="bi bi-arrow-down-up"></i>
+									</div>
+									<span class="nav-text">Assign Plans</span>
+								</NavLink>
+								<NavLink class="nav-item submenu-item" href="billing/payments">
+									<div class="nav-icon">
+										<i class="bi bi-cash-coin"></i>
+									</div>
+									<span class="nav-text">Payments & Invoices</span>
+								</NavLink>
+								<NavLink class="nav-item submenu-item" href="billing/usage">
+									<div class="nav-icon">
+										<i class="bi bi-graph-up"></i>
+									</div>
+									<span class="nav-text">Plan Usage Stats</span>
+								</NavLink>
+							</div>
+				}
+			}
+			else
+			{
+					<div class="nav-section-header" onclick="@(() => ToggleSubmenu("billing"))">
+							<div class="nav-icon" title="Billing & Subscription">
+							<i class="bi bi-credit-card-fill"></i>
+						</div>
+					</div>
+			}
+		</div>
+
+		<!-- Logs & Monitoring -->
+		<div class="nav-section">
+			@if (!IsCollapsed)
+			{
+					<div class="nav-section-header @(logsMenuOpen ? "active" : "")" onclick="@(() => ToggleSubmenu("logs"))">
+						<div class="d-flex align-items-center">
+							<div class="nav-icon">
+								<i class="bi bi-journal-text"></i>
+							</div>
+							<span class="nav-text">Logs & Monitoring</span>
+						</div>
+						<i class="bi @(logsMenuOpen ? "bi-chevron-down" : "bi-chevron-right") nav-arrow"></i>
+					</div>
+
+				@if (logsMenuOpen)
+				{
+							<div class="submenu">
+								<NavLink class="nav-item submenu-item" href="logs/login">
+									<div class="nav-icon">
+										<i class="bi bi-door-open"></i>
+									</div>
+									<span class="nav-text">Login Logs</span>
+								</NavLink>
+								<NavLink class="nav-item submenu-item" href="logs/activity">
+									<div class="nav-icon">
+										<i class="bi bi-activity"></i>
+									</div>
+									<span class="nav-text">Activity Logs</span>
+								</NavLink>
+								<NavLink class="nav-item submenu-item" href="logs/api">
+									<div class="nav-icon">
+										<i class="bi bi-code-slash"></i>
+									</div>
+									<span class="nav-text">API Usage</span>
+								</NavLink>
+								<NavLink class="nav-item submenu-item" href="logs/audit">
+									<div class="nav-icon">
+										<i class="bi bi-search"></i>
+									</div>
+									<span class="nav-text">Audit Trail</span>
+								</NavLink>
+							</div>
+				}
+			}
+			else
+			{
+					<div class="nav-section-header" onclick="@(() => ToggleSubmenu("logs"))">
+							<div class="nav-icon" title="Logs & Monitoring">
+							<i class="bi bi-journal-text"></i>
+						</div>
+					</div>
+			}
+		</div>
+
+		<!-- Security & Utilities -->
+		<div class="nav-section">
+			@if (!IsCollapsed)
+			{
+					<div class="nav-section-header @(securityMenuOpen ? "active" : "")" onclick="@(() => ToggleSubmenu("security"))">
+						<div class="d-flex align-items-center">
+							<div class="nav-icon">
+								<i class="bi bi-shield-lock-fill"></i>
+							</div>
+							<span class="nav-text">Security & Utilities</span>
+						</div>
+						<i class="bi @(securityMenuOpen ? "bi-chevron-down" : "bi-chevron-right") nav-arrow"></i>
+					</div>
+
+				@if (securityMenuOpen)
+				{
+							<div class="submenu">
+								<NavLink class="nav-item submenu-item" href="security/backup">
+									<div class="nav-icon">
+										<i class="bi bi-cloud-arrow-up"></i>
+									</div>
+									<span class="nav-text">Backup & Restore</span>
+								</NavLink>
+								<NavLink class="nav-item submenu-item" href="security/cache">
+									<div class="nav-icon">
+										<i class="bi bi-trash3"></i>
+									</div>
+									<span class="nav-text">Clear Cache</span>
+								</NavLink>
+								<NavLink class="nav-item submenu-item" href="security/force-logout">
+									<div class="nav-icon">
+										<i class="bi bi-power"></i>
+									</div>
+									<span class="nav-text">Force Logout</span>
+								</NavLink>
+								<NavLink class="nav-item submenu-item" href="security/version">
+									<div class="nav-icon">
+										<i class="bi bi-box-seam"></i>
+									</div>
+									<span class="nav-text">App Version Control</span>
+								</NavLink>
+							</div>
+				}
+			}
+			else
+			{
+					<div class="nav-section-header" onclick="@(() => ToggleSubmenu("security"))">
+							<div class="nav-icon" title="Security & Utilities">
+							<i class="bi bi-shield-lock-fill"></i>
+						</div>
+					</div>
+			}
+		</div>
+
+		<!-- System Reports -->
+		<div class="nav-section">
+			@if (!IsCollapsed)
+			{
+					<div class="nav-section-header @(reportsMenuOpen ? "active" : "")" onclick="@(() => ToggleSubmenu("reports"))">
+						<div class="d-flex align-items-center">
+							<div class="nav-icon">
+								<i class="bi bi-bar-chart-line-fill"></i>
+							</div>
+							<span class="nav-text">System Reports</span>
+						</div>
+						<i class="bi @(reportsMenuOpen ? "bi-chevron-down" : "bi-chevron-right") nav-arrow"></i>
+					</div>
+
+				@if (reportsMenuOpen)
+				{
+							<div class="submenu">
+								<NavLink class="nav-item submenu-item" href="reports/tenant-usage">
+									<div class="nav-icon">
+										<i class="bi bi-pie-chart"></i>
+									</div>
+									<span class="nav-text">Tenant Usage</span>
+								</NavLink>
+								<NavLink class="nav-item submenu-item" href="reports/module-activation">
+									<div class="nav-icon">
+										<i class="bi bi-toggles2"></i>
+									</div>
+									<span class="nav-text">Module Activation</span>
+								</NavLink>
+								<NavLink class="nav-item submenu-item" href="reports/admin-activity">
+									<div class="nav-icon">
+										<i class="bi bi-person-workspace"></i>
+									</div>
+									<span class="nav-text">Admin Activity</span>
+								</NavLink>
+								<NavLink class="nav-item submenu-item" href="reports/system-health">
+									<div class="nav-icon">
+										<i class="bi bi-heart-pulse"></i>
+									</div>
+									<span class="nav-text">System Health</span>
+								</NavLink>
+							</div>
+				}
+			}
+			else
+			{
+					<div class="nav-section-header" onclick="@(() => ToggleSubmenu("reports"))">
+							<div class="nav-icon" title="System Reports">
+							<i class="bi bi-bar-chart-line-fill"></i>
+						</div>
+					</div>
+			}
+		</div>
+	</div>
+
+	<!-- System Admin Footer -->
+	@if (!IsCollapsed)
+	{
+			<div class="sidebar-footer">
+				<div class="version-info">
+					<div class="system-status">
+						<span class="status-indicator online"></span>
+						<small>System Online</small>
+					</div>
+					<small>Jewel ERP Admin v1.0.0</small>
+				</div>
+			</div>
+	}
+</div>
+
+<style>
+	/* Enhanced System Admin Sidebar Styling */
+	.sidebar-container {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		background-color: var(--bg-secondary);
+		color: var(--text-primary);
+		overflow: hidden;
+	}
+
+	/* System Admin Header with Enhanced Shield Icon */
+	.sidebar-header {
+		padding: 1.5rem 1rem;
+		border-bottom: 1px solid var(--border-color);
+		background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(59, 130, 246, 0.05) 100%);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.sidebar-brand {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
+	.sidebar-brand-collapsed {
+		display: flex;
+		justify-content: center;
+		padding: 0.5rem 0;
+	}
+
+	.brand-icon {
+		color: #3b82f6;
+		font-size: 1.75rem;
+		filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
+	}
+
+	.brand-text {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.brand-name {
+		font-weight: 700;
+		font-size: 1.125rem;
+		line-height: 1.2;
+		color: #3b82f6;
+	}
+
+	.brand-tagline {
+		font-size: 0.75rem;
+		opacity: 0.8;
+		color: var(--text-secondary);
+	}
+
+	/* Enhanced Sidebar Menu */
+	.sidebar-menu {
+		flex: 1;
+		overflow-y: auto;
+		padding: 1rem 0;
+	}
+
+	.nav-section {
+		margin-bottom: 0.5rem;
+	}
+
+	.nav-section-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0.75rem 1.25rem;
+		color: var(--text-secondary);
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.2s ease;
+		border-radius: 0 25px 25px 0;
+		margin-right: 1rem;
+	}
+
+	.nav-section-header:hover,
+	.nav-section-header.active {
+		background: linear-gradient(90deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+		color: #3b82f6;
+		border-left: 3px solid #3b82f6;
+	}
+
+	.dark-mode .nav-section-header:hover,
+	.dark-mode .nav-section-header.active {
+		background: linear-gradient(90deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%);
+	}
+
+	.nav-arrow {
+		font-size: 0.8rem;
+		transition: transform 0.3s ease;
+	}
+
+	.nav-section-header.active .nav-arrow {
+		transform: rotate(90deg);
+	}
+
+	.submenu {
+		padding-left: 0.5rem;
+		margin-top: 0.25rem;
+		margin-bottom: 0.25rem;
+		border-left: 2px solid rgba(59, 130, 246, 0.2);
+		margin-left: 1.5rem;
+		background: linear-gradient(180deg, rgba(59, 130, 246, 0.02) 0%, transparent 100%);
+	}
+
+	.nav-item {
+		display: flex;
+		align-items: center;
+		padding: 0.75rem 1.25rem;
+		color: var(--text-primary);
+		text-decoration: none;
+		transition: all 0.2s ease;
+		border-radius: 0 25px 25px 0;
+		border-left: 3px solid transparent;
+		margin-right: 1rem;
+	}
+
+	.submenu-item {
+		padding: 0.6rem 1rem;
+		margin-right: 0.5rem;
+		border-radius: 0 20px 20px 0;
+	}
+
+	.nav-item:hover {
+		background: linear-gradient(90deg, rgba(59, 130, 246, 0.08) 0%, rgba(59, 130, 246, 0.03) 100%);
+		color: #3b82f6;
+		transform: translateX(2px);
+	}
+
+	.dark-mode .nav-item:hover {
+		background: linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.05) 100%);
+	}
+
+	.nav-item.active {
+		background: linear-gradient(90deg, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0.06) 100%);
+		color: #3b82f6;
+		border-left-color: #3b82f6;
+		font-weight: 600;
+		box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+	}
+
+	.dark-mode .nav-item.active {
+		background: linear-gradient(90deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%);
+	}
+
+	.nav-icon {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 24px;
+		height: 24px;
+		margin-right: 0.75rem;
+		color: currentColor;
+		opacity: 0.9;
+		transition: all 0.2s ease;
+	}
+
+	.nav-item:hover .nav-icon,
+	.nav-section-header:hover .nav-icon {
+		transform: scale(1.1);
+		opacity: 1;
+	}
+
+	.nav-text {
+		white-space: nowrap;
+		font-weight: 500;
+		font-size: 0.9375rem;
+	}
+
+	/* Enhanced Footer with System Status */
+	.sidebar-footer {
+		padding: 1rem;
+		border-top: 1px solid var(--border-color);
+		font-size: 0.75rem;
+		color: var(--text-secondary);
+		text-align: center;
+		background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(59, 130, 246, 0.02) 100%);
+	}
+
+	.system-status {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		margin-bottom: 0.5rem;
+	}
+
+	 .status-indicator {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background-color: #10b981;
+		animation: pulse 2s infinite;
+	}
+	@@keyframes pulse {
+		0% {
+			box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+		}
+		70% {
+			box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+		}
+		100% {
+			box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+		}
+	}
+
+	/* Scrollbar Styling */
+	.sidebar-menu::-webkit-scrollbar {
+		width: 8px;
+	}
+	.sidebar-menu::-webkit-scrollbar-thumb {
+		background: rgba(59, 130, 246, 0.07);
+		border-radius: 4px;
+	}
+
+	
+</style>

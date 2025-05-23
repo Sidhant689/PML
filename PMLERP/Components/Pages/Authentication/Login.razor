@@ -1,0 +1,564 @@
+﻿@page "/login"
+
+@layout LoginLayout
+
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject IJSRuntime JSRuntime
+
+<div class="login-page-wrapper @(isDarkMode ? "dark-mode" : "")">
+    <div class="login-container">
+        <div class="company-branding">
+            <div class="logo-container">
+                <i class="bi bi-gem"></i>
+            </div>
+            <h2 class="company-name">Jewel ERP</h2>
+            <p class="tagline">Luxury Management Solutions</p>
+        </div>
+
+        <div class="login-card">
+            <div class="card-header">
+                <div class="card-header-content">
+                    <h3 class="login-title">Administrator Login</h3>
+                    <p class="login-subtitle">Access admin dashboard</p>
+                </div>
+            </div>
+            <div class="card-content">
+                <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+                    <DataAnnotationsValidator />
+
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <div class="input-with-icon">
+                            <i class="bi bi-person input-icon"></i>
+                            <input type="text"
+                                   id="username"
+                                   class="form-control"
+                                   @bind="loginModel.Username"
+                                   placeholder="Enter your username" />
+                        </div>
+                        <ValidationMessage For="@(() => loginModel.Username)" class="validation-message" />
+                    </div>
+
+                    <div class="form-group">
+                        <div class="password-label-container">
+                            <label for="password">Password</label>
+                            <a href="#" class="forgot-password">Forgot password?</a>
+                        </div>
+                        <div class="input-with-icon">
+                            <i class="bi bi-lock input-icon"></i>
+                            <input type="@(showPassword ? "text" : "password")"
+                                   id="password"
+                                   class="form-control password-input"
+                                   @bind="loginModel.Password"
+                                   placeholder="Enter your password" />
+                            <button type="button" class="password-toggle-btn" @onclick="TogglePasswordVisibility">
+                                <i class="bi @(showPassword ? "bi-eye-slash" : "bi-eye")"></i>
+                            </button>
+                        </div>
+                        <ValidationMessage For="@(() => loginModel.Password)" class="validation-message" />
+                    </div>
+
+                    <div class="remember-me-container">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="rememberMe" @bind="rememberMe" />
+                            <label class="form-check-label" for="rememberMe">Remember me</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group login-button-container">
+                        <button type="submit"
+                                class="btn login-button"
+                                disabled="@isLoading">
+                            @if (isLoading)
+                            {
+                                <div class="spinner-border spinner-border-sm me-2" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <span class="loading-text">Signing In...</span>
+                            }
+                            else
+                            {
+                                <span>Sign In</span>
+                            }
+                        </button>
+                    </div>
+                </EditForm>
+
+                <div class="register-link-container">
+                    <p>User Login? <a href="/user-login" class="register-link">User Portal</a></p>
+                </div>
+
+                <div class="theme-toggle-container">
+                    <button class="theme-toggle-btn" @onclick="ToggleTheme" title="Toggle Theme">
+                        <i class="bi @(isDarkMode ? "bi-sun" : "bi-moon")"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="login-footer">
+            <p>&copy; @DateTime.Now.Year Jewel ERP Solutions. All rights reserved.</p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginViewModel loginModel = new();
+    private bool isLoading = false;
+    private bool rememberMe = false;
+    private bool isDarkMode = false;
+    private bool showPassword = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (await AuthService.IsUserAuthenticatedAsync())
+        {
+            NavigationManager.NavigateTo("/");
+        }
+
+        // Load theme preference
+        await LoadThemePreference();
+    }
+
+    private async Task HandleLogin()
+    {
+        isLoading = true;
+        try
+        {
+            var result = await AuthService.LoginAsync(loginModel.Username, loginModel.Password);
+            if (result)
+            {
+                NavigationManager.NavigateTo("/");
+            }
+            else
+            {
+                Snackbar.Add("Invalid username or password", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void TogglePasswordVisibility()
+    {
+        showPassword = !showPassword;
+    }
+
+    private async Task ToggleTheme()
+    {
+        isDarkMode = !isDarkMode;
+        if (JSRuntime != null)
+        {
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "jewelErpDarkMode", isDarkMode);
+        }
+    }
+
+    private async Task LoadThemePreference()
+    {
+        if (JSRuntime != null)
+        {
+            try
+            {
+                var savedTheme = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "jewelErpDarkMode");
+                if (!string.IsNullOrEmpty(savedTheme))
+                {
+                    isDarkMode = savedTheme.ToLower() == "true";
+                    StateHasChanged();
+                }
+            }
+            catch
+            {
+                // Fallback if JS interop fails
+                isDarkMode = false;
+            }
+        }
+    }
+
+    public class LoginViewModel
+    {
+        [Required(ErrorMessage = "Username is required")]
+        public string Username { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Password is required")]
+        public string Password { get; set; } = string.Empty;
+    }
+}
+
+<style>
+    /* Main Layout */
+    .login-page-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        width: 100%;
+        background: linear-gradient(135deg, #f0f7ff 0%, var(--bg-primary) 100%);
+        padding: 2rem 1rem;
+        box-sizing: border-box;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+
+    .dark-mode.login-page-wrapper {
+        background: linear-gradient(135deg, #1a2942 0%, var(--bg-primary) 100%);
+    }
+
+    .login-container {
+        width: 100%;
+        max-width: 450px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    /* Company Branding */
+    .company-branding {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .logo-container {
+        background-color: var(--secondary-color);
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    }
+
+        .logo-container i {
+            font-size: 32px;
+            color: white;
+        }
+
+    .company-name {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0.5rem 0 0.25rem;
+    }
+
+    .tagline {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        margin: 0;
+    }
+
+    /* Card Styling */
+    .login-card {
+        width: 100%;
+        border-radius: 16px;
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+    }
+
+        .login-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+    .card-header {
+        padding: 1.5rem 1.5rem 0;
+    }
+
+    .card-header-content {
+        padding: 0.5rem 0;
+        text-align: center;
+    }
+
+    .login-title {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .login-subtitle {
+        margin: 0.25rem 0 0;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    .card-content {
+        padding: 1.5rem;
+    }
+
+    /* Form Elements */
+    .form-group {
+        margin-bottom: 1.5rem;
+        width: 100%;
+    }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+        }
+
+    .input-with-icon {
+        position: relative;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-secondary);
+        z-index: 2;
+        font-size: 1.1rem;
+    }
+
+    .dark-mode .input-icon {
+        color: #94a3b8;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        color: var(--text-primary);
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .password-input {
+        padding-right: 2.5rem;
+    }
+
+    .dark-mode .form-control {
+        background-color: #2a3647;
+        border-color: #3d4a5c;
+        color: var(--text-primary);
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--secondary-color);
+        box-shadow: 0 0 0 3px rgba(200, 165, 91, 0.25);
+    }
+
+    .dark-mode .form-control:focus {
+        border-color: var(--secondary-color);
+        box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.25);
+    }
+
+    .password-label-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .forgot-password {
+        font-size: 0.75rem;
+        color: var(--secondary-color);
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+        .forgot-password:hover {
+            text-decoration: underline;
+            color: var(--accent-color);
+        }
+
+    /* Password Toggle Button */
+    .password-toggle-btn {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        padding: 0;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 3;
+        transition: color 0.2s ease;
+    }
+
+        .password-toggle-btn:hover {
+            color: var(--secondary-color);
+        }
+
+        .password-toggle-btn i {
+            font-size: 1rem;
+        }
+
+    .dark-mode .password-toggle-btn {
+        color: #94a3b8;
+    }
+
+        .dark-mode .password-toggle-btn:hover {
+            color: var(--secondary-color);
+        }
+
+    .remember-me-container {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-check {
+        display: flex;
+        align-items: center;
+    }
+
+    .form-check-input {
+        margin-right: 0.5rem;
+    }
+
+    .form-check-label {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    /* Button Styling */
+    .login-button-container {
+        margin-top: 2rem;
+    }
+
+    .login-button {
+        width: 100%;
+        height: 48px;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 1rem;
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color);
+        color: white;
+        box-shadow: 0 2px 4px rgba(200, 165, 91, 0.2);
+        transition: all 0.3s ease;
+    }
+
+        .login-button:hover {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+            box-shadow: 0 4px 6px rgba(200, 165, 91, 0.3);
+        }
+
+    .spinner-border {
+        margin-right: 0.5rem;
+    }
+
+    .loading-text {
+        vertical-align: middle;
+    }
+
+    /* Register Link */
+    .register-link-container {
+        margin-top: 1.5rem;
+        text-align: center;
+    }
+
+        .register-link-container p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+    .register-link {
+        color: var(--secondary-color);
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+        .register-link:hover {
+            text-decoration: underline;
+            color: var(--accent-color);
+        }
+
+    /* Theme Toggle */
+    .theme-toggle-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 1.5rem;
+    }
+
+    .theme-toggle-btn {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+        .theme-toggle-btn:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+            color: var(--secondary-color);
+        }
+
+    .dark-mode .theme-toggle-btn {
+        color: #94a3b8;
+    }
+
+        .dark-mode .theme-toggle-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--secondary-color);
+        }
+
+    /* Footer */
+    .login-footer {
+        margin-top: 2rem;
+        text-align: center;
+    }
+
+        .login-footer p {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+    /* Validation */
+    .validation-message {
+        color: var(--error-color);
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+    }
+
+    /* Responsive Adjustments */
+    @@media (max-width: 576px) {
+        .login-page-wrapper
+
+    {
+        padding: 1rem 0.5rem;
+    }
+
+    .login-card {
+        border-radius: 12px;
+    }
+
+    .company-name {
+        font-size: 1.5rem;
+    }
+
+    .card-content {
+        padding: 1.25rem;
+    }
+
+    }
+</style>

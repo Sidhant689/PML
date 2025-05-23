@@ -1,0 +1,758 @@
+﻿@* MainLayout.razor *@
+
+@inherits LayoutComponentBase
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+<!-- Modern Topbar with Jewelry Brand Aesthetic -->
+<div class="topbar @(isDarkMode ? "dark-mode" : "")" style="height: 64px;">
+    <div class="d-flex align-items-center h-100">
+        <button class="menu-toggle-btn" onclick="@ToggleSidebar" aria-label="Toggle Sidebar">
+            <i class="bi @(sidebarExpanded ? "bi-x" : "bi-list") fs-4"></i>
+        </button>
+        
+        <!-- Logo with jewelry icon -->
+        <a class="brand d-flex align-items-center" href="">
+            <span class="brand-icon me-2">
+                <i class="bi bi-gem"></i>
+            </span>
+            <span class="brand-text">Jewel ERP</span>
+        </a>
+    </div>
+    
+    <div class="topbar-actions">
+        <!-- Theme toggle -->
+        <button class="action-btn theme-toggle" @onclick="ToggleTheme" title="Toggle Theme">
+            <i class="bi @(isDarkMode ? "bi-sun" : "bi-moon")"></i>
+        </button>
+        
+        <!-- Notifications -->
+        <div class="action-btn position-relative" title="Notifications">
+            <i class="bi bi-bell"></i>
+            <span class="notification-badge">3</span>
+        </div>
+
+        <!-- User Menu -->
+        <AuthorizeView>
+            <Authorized>
+                <div class="user-menu">
+                    <div class="user-avatar" @onclick="ToggleUserMenu">
+                        <div class="user-initial">@(GetUserInitial(context.User.Identity?.Name))</div>
+                    </div>
+                    <div class="user-dropdown @(userMenuOpen ? "show" : "")">
+                        <div class="user-info mb-2 pb-2 border-bottom">
+                            <p class="mb-0 fw-bold">@context.User.Identity?.Name</p>
+                            <small class="text-muted">Administrator</small>
+                        </div>
+                        <a href="/profile" class="dropdown-item">
+                            <i class="bi bi-person me-2"></i> Profile
+                        </a>
+                        <a href="/settings" class="dropdown-item">
+                            <i class="bi bi-gear me-2"></i> Settings
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <button class="dropdown-item text-danger" @onclick="HandleLogout">
+                            <i class="bi bi-box-arrow-right me-2"></i> Logout
+                        </button>
+                    </div>
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <div class="d-flex">
+                    <a href="/login" class="btn btn-outline-primary btn-sm me-2">Login</a>
+                    <a href="/register" class="btn btn-primary btn-sm">Register</a>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
+    </div>
+</div>
+
+<!-- Modern Layout with Enhanced Sidebar -->
+<div class="app-layout @(isDarkMode ? "dark-mode" : "")">
+    <!-- Elegant Sidebar Navigation -->
+    <div class="@SidebarCssClass">
+        <NavMenu IsCollapsed="@isCollapsed" />
+    </div>
+
+    <!-- Backdrop for mobile -->
+    @if (sidebarExpanded && isMobile)
+    {
+        <div class="sidebar-backdrop" @onclick="ToggleSidebar"></div>
+    }
+
+    <!-- Main Content Area with Card-Based Layout -->
+    <main class="main-content">
+        <!-- Page Title Bar -->
+        <div class="page-title-bar">
+            <h1 class="page-title">@GetPageTitle()</h1>
+            <div class="breadcrumb">
+                @foreach (var item in GetBreadcrumbs())
+                {
+                    @if (item == GetBreadcrumbs().Last())
+                    {
+                        <span class="breadcrumb-item active">@item</span>
+                    }
+                    else
+                    {
+                        <span class="breadcrumb-item">@item</span>
+                        <span class="breadcrumb-separator">/</span>
+                    }
+                }
+            </div>
+        </div>
+        
+        <!-- Content Wrapper -->
+        <div class="content-wrapper">
+            @Body
+        </div>
+    </main>
+</div>
+
+@code {
+    private bool sidebarExpanded = true;
+    private bool isCollapsed = false;
+    private bool isMobile = false;
+    private bool isDarkMode = false;
+    private bool userMenuOpen = false;
+    private IJSRuntime? jsRuntime;
+
+    // Static reference to the current instance
+    private static MainLayout? Current;
+
+    protected override void OnInitialized()
+    {
+        // Store reference to this instance for JS callbacks
+        Current = this;
+        
+        // Assign JSRuntime to the class field for use in other methods
+        jsRuntime = JSRuntime;
+        
+        // On first load, check device
+        CheckIsMobile();
+        
+        // On mobile, the sidebar is hidden by default
+        if (isMobile)
+        {
+            sidebarExpanded = false;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && jsRuntime != null)
+        {
+            // Check screen size on first render when we have access to JS
+            await CheckIsMobileJsAsync();
+            
+            // Load saved theme preference
+            await LoadThemePreference();
+
+            // Apply Saved theme to the Syncfusion Controls
+            await jsRuntime.InvokeVoidAsync("applySavedTheme");
+            
+            // Add resize event listener to update mobile state when window is resized
+            await jsRuntime.InvokeVoidAsync("eval", @"
+                window.resizeHandler = () => {
+                    DotNet.invokeMethodAsync('PMLERP', 'HandleWindowResize', window.innerWidth);
+                };
+                window.addEventListener('resize', window.resizeHandler);
+                
+                // Close user menu when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('.user-menu')) {
+                        DotNet.invokeMethodAsync('PMLERP', 'CloseUserMenu');
+                    }
+                });
+            ");
+        }
+    }
+
+    private void CheckIsMobile()
+    {
+#if MAUIAPP
+        // For MAUI native apps, use DeviceInfo to check the platform and screen size
+        var deviceType = DeviceInfo.Current.Idiom;
+        var mainDisplayInfo = DeviceDisplay.MainDisplayInfo;
+        var width = mainDisplayInfo.Width / mainDisplayInfo.Density;
+        
+        // Consider mobile if it's a phone or a small tablet (width < 768px)
+        isMobile = deviceType == DeviceIdiom.Phone || width < 768;
+#else
+        // For web, we'll default to false and update in OnAfterRenderAsync with JS
+        isMobile = false;
+#endif
+    }
+
+    private async Task CheckIsMobileJsAsync()
+    {
+        if (jsRuntime != null)
+        {
+            try
+            {
+                // Use JS to check if the window width is less than 768px (common breakpoint for mobile)
+                var width = await jsRuntime.InvokeAsync<int>("eval", "window.innerWidth");
+                var newIsMobile = width < 768;
+
+                // Only update and re-render if the value changed
+                if (newIsMobile != isMobile)
+                {
+                    isMobile = newIsMobile;
+                    if (isMobile)
+                    {
+                        sidebarExpanded = false;
+                    }
+                    StateHasChanged();
+                }
+            }
+            catch
+            {
+                // Fallback if JS interop fails
+                isMobile = false;
+            }
+        }
+    }
+
+    private string SidebarCssClass
+    {
+        get
+        {
+            var baseClasses = "sidebar";
+
+            if (isMobile)
+            {
+                // Mobile behavior: completely hide/show sidebar
+                return sidebarExpanded ? $"{baseClasses} show" : baseClasses;
+            }
+            else
+            {
+                // Desktop behavior: collapse to icon-only or expand
+                return isCollapsed ? $"{baseClasses} collapsed" : baseClasses;
+            }
+        }
+    }
+
+    private void ToggleSidebar()
+    {
+        if (isMobile)
+        {
+            // On mobile: show/hide sidebar completely
+            sidebarExpanded = !sidebarExpanded;
+        }
+        else
+        {
+            sidebarExpanded = !sidebarExpanded;
+            // On desktop: collapse/expand sidebar
+            isCollapsed = !isCollapsed;
+        }
+    }
+
+    private void ToggleUserMenu()
+    {
+        userMenuOpen = !userMenuOpen;
+    }
+
+    [JSInvokable]
+    public static Task CloseUserMenu()
+    {
+        if (Current != null && Current.userMenuOpen)
+        {
+            Current.userMenuOpen = false;
+            Current.StateHasChanged();
+        }
+        return Task.CompletedTask;
+    }
+
+    private async Task HandleLogout()
+    {
+        await AuthService.LogoutAsync();
+        NavigationManager.NavigateTo("/login");
+    }
+
+    private string GetUserInitial(string? userName)
+    {
+        if (string.IsNullOrEmpty(userName))
+            return "?";
+            
+        return userName.Substring(0, 1).ToUpper();
+    }
+
+    private async Task ToggleTheme()
+    {
+        isDarkMode = !isDarkMode;
+        if (jsRuntime != null)
+        {
+            await jsRuntime.InvokeVoidAsync("localStorage.setItem", "jewelErpDarkMode", isDarkMode);
+            await jsRuntime.InvokeVoidAsync("toggleTheme");
+        }
+    }
+
+    private async Task LoadThemePreference()
+    {
+        if (jsRuntime != null)
+        {
+            try
+            {
+                var savedTheme = await jsRuntime.InvokeAsync<string>("localStorage.getItem", "jewelErpDarkMode");
+                if (!string.IsNullOrEmpty(savedTheme))
+                {
+                    isDarkMode = savedTheme.ToLower() == "true";
+                    StateHasChanged();
+                }
+            }
+            catch
+            {
+                // Fallback if JS interop fails
+                isDarkMode = false;
+            }
+        }
+    }
+
+    // Helper method to get page title based on current URI
+    private string GetPageTitle()
+    {
+        var uri = NavigationManager.Uri;
+        var relativePath = NavigationManager.ToBaseRelativePath(uri);
+        
+        if (string.IsNullOrEmpty(relativePath))
+            return "Dashboard";
+            
+        // Convert first letter to uppercase and handle hyphens
+        var segments = relativePath.Split('/');
+        if (segments.Length > 0)
+        {
+            var lastSegment = segments[segments.Length - 1];
+            return string.IsNullOrEmpty(lastSegment) 
+                ? "Dashboard" 
+                : char.ToUpper(lastSegment[0]) + lastSegment.Substring(1).Replace("-", " ");
+        }
+        
+        return "Dashboard";
+    }
+    
+    // Helper method to generate breadcrumbs based on current URI
+    private List<string> GetBreadcrumbs()
+    {
+        var result = new List<string> { "Home" };
+        
+        var uri = NavigationManager.Uri;
+        var relativePath = NavigationManager.ToBaseRelativePath(uri);
+        
+        if (!string.IsNullOrEmpty(relativePath))
+        {
+            var segments = relativePath.Split('/');
+            foreach (var segment in segments)
+            {
+                if (!string.IsNullOrEmpty(segment))
+                {
+                    // Convert first letter to uppercase and handle hyphens
+                    var formatted = char.ToUpper(segment[0]) + segment.Substring(1).Replace("-", " ");
+                    result.Add(formatted);
+                }
+            }
+        }
+        
+        return result;
+    }
+
+    // Add a static method to be called from JS
+    [JSInvokable]
+    public static Task<bool> HandleWindowResize(int width)
+    {
+        // Find the instance of MainLayout that's currently active
+        if (Current != null)
+        {
+            Current.UpdateMobileState(width < 768);
+        }
+        return Task.FromResult(true);
+    }
+
+    // Update mobile state and trigger UI refresh
+    private void UpdateMobileState(bool newIsMobile)
+    {
+        if (isMobile != newIsMobile)
+        {
+            isMobile = newIsMobile;
+            // If switching to mobile, collapse sidebar by default
+            if (isMobile)
+            {
+                sidebarExpanded = false;
+            }
+            StateHasChanged();
+        }
+    }
+
+    // Clean up event listeners when component is disposed
+    public void Dispose()
+    {
+        // Remove the resize event listener
+        if (jsRuntime != null)
+        {
+            try
+            {
+                jsRuntime.InvokeVoidAsync("eval", @"
+                    window.removeEventListener('resize', window.resizeHandler);
+                    document.removeEventListener('click', document.clickHandler);
+                ");
+            }
+            catch
+            {
+                // Safely ignore errors during disposal
+            }
+        }
+        
+        // Remove static reference
+        if (Current == this)
+        {
+            Current = null;
+        }
+    }
+}
+
+<style>
+    /* Base Layout */
+    .app-layout {
+        display: flex;
+        height: calc(100vh - var(--topbar-height));
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+    }
+
+    /* Elegant Top Bar */
+    .topbar {
+        height: var(--topbar-height);
+        background-color: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-primary);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 1rem;
+        position: sticky;
+        top: 0;
+        z-index: 1050;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .dark-mode .topbar {
+        background-color: var(--bg-secondary);
+        border-bottom-color: var(--border-color);
+    }
+
+    /* Brand Styling */
+    .brand {
+        display: flex;
+        align-items: center;
+        color: var(--text-primary);
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 1.25rem;
+        padding-left: 0.5rem;
+    }
+
+    .brand-icon {
+        color: var(--secondary-color);
+        font-size: 1.5rem;
+    }
+
+    .brand:hover {
+        color: var(--primary-color);
+    }
+
+    /* Top Bar Actions */
+    .topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .action-btn {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.2s ease;
+    }
+
+    .action-btn:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+        color: var(--primary-color);
+    }
+
+    .dark-mode .action-btn:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .notification-badge {
+        position: absolute;
+        top: 0;
+        right: 0;
+        background-color: var(--error-color);
+        color: white;
+        border-radius: 50%;
+        width: 18px;
+        height: 18px;
+        font-size: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* User Menu */
+    .user-menu {
+        position: relative;
+    }
+
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .user-avatar:hover {
+        transform: scale(1.05);
+    }
+
+    .user-initial {
+        font-size: 1.2rem;
+    }
+
+    .user-dropdown {
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        min-width: 220px;
+        box-shadow: var(--shadow-lg);
+        padding: 1rem;
+        z-index: 1060;
+        display: none;
+    }
+
+    .dark-mode .user-dropdown {
+        background-color: var(--bg-secondary);
+        border-color: var(--border-color);
+    }
+
+    .user-dropdown.show {
+        display: block;
+        animation: fadeIn 0.2s ease;
+    }
+
+    .dropdown-item {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem;
+        color: var(--text-primary);
+        text-decoration: none;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .dropdown-item:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .dark-mode .dropdown-item:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .dropdown-divider {
+        height: 1px;
+        background-color: var(--border-color);
+        margin: 0.5rem 0;
+    }
+
+    /* Main Content */
+    .main-content {
+        flex: 1;
+        overflow-y: auto;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        background-color: var(--bg-primary);
+    }
+
+    /* Sidebar Styling */
+    .sidebar {
+        width: var(--sidebar-width);
+        height: 100%;
+        background-color: var(--bg-secondary);
+        border-right: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+        overflow-x: hidden;
+        overflow-y: auto;
+        z-index: 1040;
+    }
+
+    .dark-mode .sidebar {
+        background-color: var(--bg-secondary);
+        border-right-color: var(--border-color);
+    }
+
+    .sidebar.collapsed {
+        width: var(--sidebar-collapsed-width);
+    }
+
+    /* Menu Toggle Button */
+    .menu-toggle-btn {
+        background: none;
+        border: none;
+        color: var(--text-primary);
+        width: 40px;
+        height: 40px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .menu-toggle-btn:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .dark-mode .menu-toggle-btn:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Page Title and Breadcrumb */
+    .dark-mode .page-title-bar {
+        background-color: var(--bg-secondary);
+        border-bottom-color: var(--border-color);
+    }
+
+    /* More compact Page Title and Breadcrumb */
+.page-title-bar {
+    padding: 0.8rem; /* Reduced from 1.5rem to 1rem */
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+}
+
+.page-title {
+    margin: 0 0 0.25rem 0; /* Reduced bottom margin */
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.2; /* Tighter line height */
+}
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem; /* Reduced from 0.5rem */
+    line-height: 1;
+}
+
+
+    .breadcrumb-item {
+        padding: 0 0.25rem;
+    }
+
+    .breadcrumb-separator {
+        padding: 0 0.25rem;
+    }
+
+    .breadcrumb-item.active {
+        color: var(--primary-color);
+        font-weight: 500;
+    }
+
+    /* Content Wrapper */
+    .content-wrapper {
+        padding: 1.5rem 2rem;
+        flex: 1;
+    }
+
+    /* Mobile Styles */
+    @@media (max-width: 767.98px) {
+        .sidebar {
+            position: fixed;
+            top: var(--topbar-height);
+            left: calc(-1 * var(--sidebar-width));
+            height: calc(100vh - var(--topbar-height));
+            z-index: 1050;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .sidebar.show {
+            left: 0;
+        }
+
+        .sidebar-backdrop {
+            position: fixed;
+            top: var(--topbar-height);
+            left: 0;
+            width: 100%;
+            height: calc(100vh - var(--topbar-height));
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1040;
+        }
+
+        .page-title-bar {
+        padding: 0.75rem 1rem; /* More compact on mobile */
+    }
+    
+    .page-title {
+        font-size: 1.3rem; /* Slightly smaller on mobile */
+    }
+
+        .content-wrapper {
+            padding: 1rem;
+        }
+    }
+
+    /* Animations */
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+.menu-toggle-btn i {
+    transition: transform 0.5s cubic-bezier(.4,2,.6,1), opacity 0.3s;
+    display: inline-block;
+}
+
+.menu-toggle-btn .bi-x {
+    transform: rotate(180deg) scale(1.1);
+    opacity: 1;
+}
+
+.menu-toggle-btn .bi-list {
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+}
+
+
+</style>

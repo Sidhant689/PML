@@ -1,0 +1,75 @@
+﻿@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(MauiProgram).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)">
+                <NotAuthorized>
+                    @if (context.User.Identity?.IsAuthenticated != true)
+                    {
+                        <RedirectToLogin />
+                    }
+                    else
+                    {
+                        <p class="not-authorized">
+                            You are not authorized to access this resource.
+                        </p>
+                    }
+                </NotAuthorized>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+        <NotFound>
+            <LayoutView Layout="@typeof(Layout.MainLayout)">
+                <p>Sorry, there's nothing at this address.</p>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        // Add a small delay to ensure all services are properly initialized
+        await Task.Delay(100);
+        
+        var isAuthenticated = await AuthService.IsUserAuthenticatedAsync();
+        var path = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        
+        if (!isAuthenticated &&
+            !path.StartsWith("login", StringComparison.OrdinalIgnoreCase) &&
+            !path.StartsWith("register", StringComparison.OrdinalIgnoreCase))
+        {
+            NavigationManager.NavigateTo("login", true);
+        }
+        else if (isAuthenticated &&
+                (path.StartsWith("login", StringComparison.OrdinalIgnoreCase) ||
+                 path.StartsWith("register", StringComparison.OrdinalIgnoreCase)))
+        {
+            NavigationManager.NavigateTo("/", true);
+        }
+    }
+
+    private class RedirectToLogin : ComponentBase
+    {
+        [Inject] private NavigationManager NavigationManager { get; set; }
+        
+        protected override void OnInitialized()
+        {
+            var returnUrl = Uri.EscapeDataString(NavigationManager.Uri);
+            NavigationManager.NavigateTo($"login?returnUrl={returnUrl}", true);
+        }
+    }
+}
+
+<style>
+    .not-authorized {
+        margin: 20px;
+        padding: 20px;
+        background-color: #ffeeee;
+        border: 1px solid #ffcccc;
+        border-radius: 5px;
+        color: #cc0000;
+    }
+</style>
