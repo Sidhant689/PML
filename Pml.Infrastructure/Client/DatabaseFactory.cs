@@ -1,6 +1,6 @@
 ﻿using MasterTenantAuthApi.Data.Client.Providers;
 using Microsoft.AspNetCore.Http;
-using Pml.Domain.Entities.Models;
+using Pml.Domain.Entities.Models.Master;
 using Pml.Domain.IRepositories.Client;
 using Pml.Domain.IRepositories.Master;
 using Pml.Infrastructure.Client.Providers;

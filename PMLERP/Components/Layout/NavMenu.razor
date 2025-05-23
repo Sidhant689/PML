@@ -117,7 +117,7 @@
 	</div>
 
 	<!-- System Admin Navigation Menu -->
-	<div class="sidebar-menu">
+	<div class="sidebar-menu" system-admin-section>
 		<!-- Dashboard -->
 		<NavLink class="nav-item" href="" Match="NavLinkMatch.All">
 			<div class="nav-icon" title="Dashboard">
@@ -126,6 +126,17 @@
 			@if (!IsCollapsed)
 			{
 					<span class="nav-text">Dashboard</span>
+			}
+		</NavLink>
+
+		<!-- Lookups -->
+		<NavLink class="nav-item" href="/master/lookups">
+			<div class="nav-icon" title="Lookups">
+				<i class="bi bi-binoculars"></i>
+			</div>
+			@if (!IsCollapsed)
+			{
+				<span class="nav-text">Lookups</span>
 			}
 		</NavLink>
 

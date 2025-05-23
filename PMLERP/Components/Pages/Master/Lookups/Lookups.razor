@@ -1,0 +1,726 @@
+﻿@page "/master/lookups"
+
+
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Master Lookups - Jewel ERP</PageTitle>
+
+<div class="lookup-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-title">
+                <i class="bi bi-binoculars header-icon"></i>
+                <div>
+                    <h1 class="page-title">Master Lookups</h1>
+                    <p class="page-subtitle">Manage and view all lookup tables</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <SfButton CssClass="e-primary" IconCss="bi bi-arrow-clockwise" OnClick="RefreshData" Disabled="@isLoading">
+                    @if (isLoading)
+                    {
+                        <span>Loading...</span>
+                    }
+                    else
+                    {
+                        <span>Refresh</span>
+                    }
+                </SfButton>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Selection Card -->
+    <div class="selection-card">
+        <div class="card-header">
+            <h5 class="card-title">
+                <i class="bi bi-table"></i>
+                Select Lookup Table
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row align-items-end">
+                <div class="col-md-8">
+                    <label class="form-label">Choose Table</label>
+                    <SfDropDownList TValue="string" 
+                                   TItem="LookupTableDto" 
+                                   DataSource="@availableTables" 
+                                   @bind-Value="@selectedTableName"
+                                   Placeholder="-- Select a lookup table --"
+                                   CssClass="lookup-dropdown"
+                                   Enabled="@(!isLoading)">
+                        <DropDownListFieldSettings Value="TableName" Text="Description"></DropDownListFieldSettings>
+                        <DropDownListEvents TValue="string" TItem="LookupTableDto" ValueChange="OnTableSelectionChanged"></DropDownListEvents>
+                    </SfDropDownList>
+                </div>
+                <div class="col-md-4">
+                    @if (!string.IsNullOrEmpty(selectedTableName))
+                    {
+                        <div class="table-info">
+                            <small class="text-muted">
+                                <strong>Records:</strong> @totalRecords
+                            </small>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Grid Card -->
+    @if (!string.IsNullOrEmpty(selectedTableName))
+    {
+        <div class="data-grid-card">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="bi bi-grid-3x3-gap"></i>
+                    @GetSelectedTableDescription() Data
+                </h5>
+                <div class="card-actions">
+                    <SfButton CssClass="e-success e-small" IconCss="bi bi-plus-circle" OnClick="AddNewRecord">
+                        Add New
+                    </SfButton>
+                    <SfButton CssClass="e-info e-small" IconCss="bi bi-download" OnClick="ExportData">
+                        Export
+                    </SfButton>
+                </div>
+            </div>
+            <div class="card-body">
+                @if (isLoading)
+                {
+                    <div class="loading-container">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading data...</p>
+                    </div>
+                }
+                else if (gridData != null && gridData.Any())
+                {
+                    <SfGrid DataSource="@gridData" 
+                           AllowPaging="true" 
+                           AllowSorting="true" 
+                           AllowFiltering="true"
+                           AllowSelection="true"
+                           AllowResizing="true"
+                           AllowGrouping
+                           Height="500"
+                           CssClass="lookup-grid">
+                        
+                        <GridPageSettings PageSize="20" PageSizes="@pageSizes"></GridPageSettings>
+                        <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Excel"></GridFilterSettings>
+                        <GridSelectionSettings Type="Syncfusion.Blazor.Grids.SelectionType.Single"></GridSelectionSettings>
+                        
+                        <GridColumns>
+                            @foreach (var column in gridColumns)
+                            {
+                                <GridColumn Field="@column.Field" 
+                                          HeaderText="@column.HeaderText" 
+                                          Width="@column.Width"
+                                          Type="@column.Type"
+                                          Format="@column.Format"
+                                          AllowEditing="@column.AllowEditing">
+                                </GridColumn>
+                            }
+                            <GridColumn HeaderText="Actions" Width="120" AllowSorting="false" AllowFiltering="false">
+                                <Template>
+                                    @{
+                                        var data = (context as IDictionary<string, object>);
+                                    }
+                                    <div class="action-buttons">
+                                        <SfButton CssClass="e-small e-primary e-icon-btn" 
+                                                 IconCss="bi bi-pencil" 
+                                                 OnClick="@(() => EditRecord(data))"
+                                                 Title="Edit">
+                                        </SfButton>
+                                        <SfButton CssClass="e-small e-danger e-icon-btn" 
+                                                 IconCss="bi bi-trash" 
+                                                 OnClick="@(() => DeleteRecord(data))"
+                                                 Title="Delete">
+                                        </SfButton>
+                                    </div>
+                                </Template>
+                            </GridColumn>
+                        </GridColumns>
+                        
+                        <GridEvents TValue="IDictionary<string, object>" 
+                                   OnRecordDoubleClick="OnRecordDoubleClick">
+                        </GridEvents>
+                    </SfGrid>
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <i class="bi bi-inbox empty-icon"></i>
+                        <h5>No Data Found</h5>
+                        <p class="text-muted">No records found for the selected table.</p>
+                        <SfButton CssClass="e-primary" IconCss="bi bi-plus-circle" OnClick="AddNewRecord">
+                            Add First Record
+                        </SfButton>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="welcome-card">
+            <div class="welcome-content">
+                <i class="bi bi-binoculars welcome-icon"></i>
+                <h4>Welcome to Master Lookups</h4>
+                <p class="text-muted">Select a lookup table from the dropdown above to view and manage its data.</p>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Toast Notification -->
+<SfToast @ref="toastRef" Width="400">
+    <ToastPosition X="@PositionX" Y="@PositionY"></ToastPosition>
+    <ToastAnimationSettings>
+        <ToastShowAnimationSettings Effect="@ToastEffect.SlideRightIn"></ToastShowAnimationSettings>
+        <ToastHideAnimationSettings Effect="@ToastEffect.SlideRightOut"></ToastHideAnimationSettings>
+    </ToastAnimationSettings>
+</SfToast>
+
+@code {
+    // Component references
+    private SfToast toastRef;
+
+	// Position settings for toast notifications
+    private string PositionX = "Center";
+    private string PositionY = "Bottom";
+
+    // Data properties
+    private List<LookupTableDto> availableTables = new();
+    private string selectedTableName = string.Empty;
+    private List<IDictionary<string, object>> gridData = new();
+    private List<GridColumnModel> gridColumns = new();
+    private int totalRecords = 0;
+    private bool isLoading = false;
+
+    // Grid configuration
+    private string[] pageSizes = { "10", "20", "50", "100" };
+
+    // Grid column model
+    public class GridColumnModel
+    {
+        public string Field { get; set; }
+        public string HeaderText { get; set; }
+        public string Width { get; set; } = "150";
+        public ColumnType Type { get; set; } = ColumnType.String;
+        public string Format { get; set; }
+        public bool AllowEditing { get; set; } = true;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAvailableTables();
+    }
+
+    private async Task LoadAvailableTables()
+    {
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+
+            // Initialize available tables with descriptions
+            availableTables = new List<LookupTableDto>
+            {
+                new() { TableName = LookupTables.MenuMaster, ClassName = "MenuMaster", Description = "Menu Master" },
+                new() { TableName = LookupTables.MenuTemplate, ClassName = "MenuTmplate", Description = "Menu Template" },
+                new() { TableName = LookupTables.MenuUserTemplate, ClassName = "MenuUserTemplate", Description = "Menu User Template" },
+                new() { TableName = LookupTables.SystemAdminUser, ClassName = "SystemAdminUser", Description = "System Admin Users" },
+                new() { TableName = LookupTables.SystemAdminRole, ClassName = "SystemAdminRole", Description = "System Admin Roles" },
+                new() { TableName = LookupTables.SystemAdminUserRole, ClassName = "SystemAdminUserRole", Description = "System Admin User Roles" },
+                new() { TableName = LookupTables.Company, ClassName = "Company", Description = "Companies" },
+                new() { TableName = LookupTables.CompanyDatabase, ClassName = "CompanyDatabase", Description = "Company Databases" },
+                new() { TableName = LookupTables.CompanyUser, ClassName = "CompanyUser", Description = "Company Users" },
+                new() { TableName = LookupTables.CompanyUserRole, ClassName = "CompanyUserRole", Description = "Company User Roles" }
+            };
+
+            await Task.Delay(500); // Simulate API call
+        }
+        catch (Exception ex)
+        {
+            await ShowToast("Error", $"Failed to load tables: {ex.Message}", "e-toast-danger");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnTableSelectionChanged(ChangeEventArgs<string, LookupTableDto> args)
+    {
+        selectedTableName = args.Value;
+        if (!string.IsNullOrEmpty(selectedTableName))
+        {
+            await LoadTableData();
+        }
+        else
+        {
+            gridData.Clear();
+            gridColumns.Clear();
+            totalRecords = 0;
+        }
+        StateHasChanged();
+    }
+
+    private async Task LoadTableData()
+    {
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+
+            // Clear existing data
+            gridData.Clear();
+            gridColumns.Clear();
+
+            // Get the entity type for the selected table
+            if (LookupTables.EntityMap.TryGetValue(selectedTableName, out var entityType))
+            {
+                // Generate columns based on entity properties
+                await GenerateColumns(entityType);
+                
+                // Generate sample data (replace with actual data service call)
+                await GenerateSampleData(entityType);
+                
+                totalRecords = gridData.Count;
+                
+                await ShowToast("Success", $"Loaded {totalRecords} records from {GetSelectedTableDescription()}", "e-toast-success");
+            }
+            else
+            {
+                await ShowToast("Error", $"Entity type not found for table: {selectedTableName}", "e-toast-warning");
+            }
+        }
+        catch (Exception ex)
+        {
+            await ShowToast("Error", $"Failed to load data: {ex.Message}", "e-toast-danger");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task GenerateColumns(Type entityType)
+    {
+        await Task.Run(() =>
+        {
+            gridColumns.Clear();
+            var properties = entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            foreach (var prop in properties)
+            {
+                if (ShouldIncludeProperty(prop))
+                {
+                    var column = new GridColumnModel
+                    {
+                        Field = prop.Name,
+                        HeaderText = GetDisplayName(prop),
+                        Width = GetColumnWidth(prop.PropertyType),
+                        Type = GetColumnType(prop.PropertyType),
+                        Format = GetColumnFormat(prop.PropertyType),
+                        AllowEditing = !IsReadOnlyProperty(prop)
+                    };
+                    gridColumns.Add(column);
+                }
+            }
+        });
+    }
+
+    private async Task GenerateSampleData(Type entityType)
+    {
+        await Task.Run(() =>
+        {
+            // This is sample data generation - replace with actual data service call
+            var sampleCount = new Random().Next(5, 25);
+            
+            for (int i = 1; i <= sampleCount; i++)
+            {
+                var record = new Dictionary<string, object>();
+                
+                foreach (var column in gridColumns)
+                {
+                    record[column.Field] = GenerateSampleValue(column.Type, column.Field, i);
+                }
+                
+                gridData.Add(record);
+            }
+        });
+    }
+
+    private object GenerateSampleValue(ColumnType columnType, string fieldName, int index)
+    {
+        var random = new Random();
+        
+        return columnType switch
+        {
+            ColumnType.Number => fieldName.ToLower().Contains("id") ? index : random.Next(1, 1000),
+            ColumnType.Boolean => random.NextDouble() > 0.5,
+            ColumnType.Date => DateTime.Now.AddDays(-random.Next(0, 365)),
+            ColumnType.DateTime => DateTime.Now.AddDays(-random.Next(0, 365)).AddHours(random.Next(0, 24)),
+            _ => fieldName.ToLower().Contains("name") ? $"Sample {fieldName} {index}" :
+                 fieldName.ToLower().Contains("code") ? $"CODE{index:D3}" :
+                 fieldName.ToLower().Contains("description") ? $"Description for {fieldName} record {index}" :
+                 $"Value {index}"
+        };
+    }
+
+    private bool ShouldIncludeProperty(PropertyInfo prop)
+    {
+        // Skip complex navigation properties and certain system properties
+        return prop.PropertyType.IsValueType || 
+               prop.PropertyType == typeof(string) || 
+               prop.PropertyType == typeof(DateTime?) ||
+               prop.PropertyType == typeof(bool?);
+    }
+
+    private string GetDisplayName(PropertyInfo prop)
+    {
+        var displayAttr = prop.GetCustomAttribute<DisplayAttribute>();
+        return displayAttr?.Name ?? AddSpacesToCamelCase(prop.Name);
+    }
+
+    private string GetColumnWidth(Type propType)
+    {
+        return propType switch
+        {
+            Type t when t == typeof(bool) || t == typeof(bool?) => "80",
+            Type t when t == typeof(int) || t == typeof(long) || t == typeof(decimal) || t == typeof(double) => "120",
+            Type t when t == typeof(DateTime) || t == typeof(DateTime?) => "150",
+            _ => "180"
+        };
+    }
+
+    private ColumnType GetColumnType(Type propType)
+    {
+        return propType switch
+        {
+            Type t when t == typeof(int) || t == typeof(long) || t == typeof(decimal) || t == typeof(double) ||
+                        t == typeof(int?) || t == typeof(long?) || t == typeof(decimal?) || t == typeof(double?) => ColumnType.Number,
+            Type t when t == typeof(bool) || t == typeof(bool?) => ColumnType.Boolean,
+            Type t when t == typeof(DateTime) || t == typeof(DateTime?) => ColumnType.DateTime,
+            _ => ColumnType.String
+        };
+    }
+
+    private string GetColumnFormat(Type propType)
+    {
+        return propType switch
+        {
+            Type t when t == typeof(DateTime) || t == typeof(DateTime?) => "dd/MM/yyyy",
+            Type t when t == typeof(decimal) || t == typeof(decimal?) => "N2",
+            _ => null
+        };
+    }
+
+    private bool IsReadOnlyProperty(PropertyInfo prop)
+    {
+        return prop.Name.ToLower().EndsWith("id") || !prop.CanWrite;
+    }
+
+    private string AddSpacesToCamelCase(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+            return string.Empty;
+
+        var result = new StringBuilder();
+        result.Append(text[0]);
+
+        for (int i = 1; i < text.Length; i++)
+        {
+            if (char.IsUpper(text[i]))
+                result.Append(' ');
+            result.Append(text[i]);
+        }
+
+        return result.ToString();
+    }
+
+    private string GetSelectedTableDescription()
+    {
+        return availableTables.FirstOrDefault(t => t.TableName == selectedTableName)?.Description ?? selectedTableName;
+    }
+
+    private async Task RefreshData()
+    {
+        if (!string.IsNullOrEmpty(selectedTableName))
+        {
+            await LoadTableData();
+        }
+        else
+        {
+            await LoadAvailableTables();
+        }
+    }
+
+    private async Task AddNewRecord()
+    {
+        await ShowToast("Info", "Add new record functionality will be implemented", "e-toast-info");
+        // Implement add new record logic
+    }
+
+    private async Task EditRecord(IDictionary<string, object> record)
+    {
+        await ShowToast("Info", "Edit record functionality will be implemented", "e-toast-info");
+        // Implement edit record logic
+    }
+
+    private async Task DeleteRecord(IDictionary<string, object> record)
+    {
+        await ShowToast("Info", "Delete record functionality will be implemented", "e-toast-info");
+        // Implement delete record logic
+    }
+
+    private async Task ExportData()
+    {
+        await ShowToast("Info", "Export functionality will be implemented", "e-toast-info");
+        // Implement export logic
+    }
+
+    private async Task OnRecordDoubleClick(RecordDoubleClickEventArgs<IDictionary<string, object>> args)
+    {
+        await EditRecord(args.RowData);
+    }
+
+    private async Task ShowToast(string title, string content, string cssClass)
+    {
+        var toastModel = new ToastModel
+        {
+            Title = title,
+            Content = content,
+            CssClass = cssClass,
+            Timeout = 4000
+        };
+        
+        await toastRef.ShowAsync(toastModel);
+    }
+}
+
+<style>
+    .lookup-container {
+        padding: 1.5rem;
+        background-color: var(--bg-primary);
+        min-height: calc(100vh - var(--topbar-height));
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(59, 130, 246, 0.05) 100%);
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-color);
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .header-title {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .header-icon {
+        font-size: 2.5rem;
+        color: var(--primary-color);
+        background: rgba(59, 130, 246, 0.1);
+        padding: 1rem;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .page-title {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        font-family: var(--heading-font);
+    }
+
+    .page-subtitle {
+        margin: 0;
+        color: var(--text-secondary);
+        font-size: 1rem;
+    }
+
+    .selection-card,
+    .data-grid-card,
+    .welcome-card {
+        background: var(--bg-secondary);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-color);
+        margin-bottom: 1.5rem;
+    }
+
+    .card-header {
+        padding: 1.5rem 2rem 1rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .card-title {
+        margin: 0;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .card-title i {
+        color: var(--primary-color);
+    }
+
+    .card-body {
+        padding: 2rem;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .lookup-dropdown {
+        border: 2px solid var(--border-color);
+        border-radius: var(--border-radius);
+    }
+
+    .table-info {
+        background: rgba(59, 130, 246, 0.05);
+        padding: 0.75rem 1rem;
+        border-radius: var(--border-radius);
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .loading-container {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-secondary);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--text-secondary);
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        color: var(--text-secondary);
+        opacity: 0.5;
+        margin-bottom: 1rem;
+    }
+
+    .welcome-card {
+        padding: 4rem 2rem;
+        text-align: center;
+    }
+
+    .welcome-content {
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .welcome-icon {
+        font-size: 5rem;
+        color: var(--primary-color);
+        opacity: 0.7;
+        margin-bottom: 1.5rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .card-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    /* Syncfusion Grid Customization */
+    .lookup-grid {
+        border: 2px solid var(--border-color);
+        border-radius: var(--border-radius);
+    }
+
+    .lookup-grid .e-grid .e-gridheader {
+        background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(59, 130, 246, 0.05) 100%);
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    .lookup-grid .e-grid .e-columnheader {
+        font-weight: 600;
+        color: var(--text-primary);
+        background: transparent;
+    }
+
+    .lookup-grid .e-grid .e-row:hover {
+        background: rgba(59, 130, 246, 0.05);
+    }
+
+    .lookup-grid .e-grid .e-altrow {
+        background: rgba(248, 250, 252, 0.5);
+    }
+
+    /* Dark mode support */
+    .dark-mode .page-header {
+        background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(59, 130, 246, 0.1) 100%);
+    }
+
+    .dark-mode .table-info {
+        background: rgba(59, 130, 246, 0.1);
+    }
+
+    .dark-mode .lookup-grid .e-grid .e-gridheader {
+        background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(59, 130, 246, 0.1) 100%);
+    }
+
+    .dark-mode .lookup-grid .e-grid .e-altrow {
+        background: rgba(30, 41, 59, 0.3);
+    }
+
+    /* Responsive Design */
+    @@media (max-width: 768px) {
+        .lookup-container {
+            padding: 1rem;
+        }
+        
+        .header-content {
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+        }
+        
+        .card-header {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: stretch;
+        }
+        
+        .card-actions {
+            justify-content: center;
+        }
+    }
+</style>

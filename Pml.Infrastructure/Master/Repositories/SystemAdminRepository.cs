@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Dapper;
 using Npgsql;
-using Pml.Domain.Entities.Models;
+using Pml.Domain.Entities.Models.Master;
 using Pml.Domain.IRepositories.Master;
 
 namespace Pml.Infrastructure.Master.Repositories

@@ -6,7 +6,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Pml.Domain.Entities.Models
+namespace Pml.Domain.Entities.Models.Master
 {
     public class MenuMaster
     {
