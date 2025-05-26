@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Pml.Domain.Entities.Models.Master;
+using Pml.Shared.Entities.Models.Master;
 
 namespace Pml.Application.IServices
 {

@@ -5,9 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Pml.Shared.Entities.Models.Master;
 
-namespace Pml.Domain.IRepositories.Master
+namespace Pml.Application.IServices
 {
-    public interface ICompanyRepository
+    public interface ICompanyService
     {
         Task<Company> GetByIdAsync(int id);
         Task<Company> GetByCodeAsync(string code);

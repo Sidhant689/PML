@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Pml.Application\Pml.Application.csproj" />
+    <ProjectReference Include="..\Pml.Shared\Pml.Shared.csproj" />
   </ItemGroup>
 
 </Project>

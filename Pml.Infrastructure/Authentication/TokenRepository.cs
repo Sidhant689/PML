@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Pml.Domain.Authentication;
-using Pml.Domain.Entities.Settings;
+using Pml.Shared.Entities.Settings;
 
 namespace Pml.Infrastructure.Authentication
 {

@@ -5,7 +5,7 @@ namespace Pml.Shared.Entities.Models.Master
 {
     public static class LookupTables
     {
-        public const string MenuMaster = "MenuMaster";
+        public const string MenuMaster = "menu_master";
         public const string MenuTemplate = "MenuTemplate";
         public const string MenuUserTemplate = "MenuUserTemplate";
         public const string SystemAdminUser = "SystemAdminUser";

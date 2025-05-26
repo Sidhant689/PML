@@ -4,8 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Pml.Application.IServices;
-using Pml.Domain.Entities.Models.Master;
 using Pml.Domain.IRepositories.Master;
+using Pml.Shared.Entities.Models.Master;
 
 namespace Pml.Application.Services
 {
