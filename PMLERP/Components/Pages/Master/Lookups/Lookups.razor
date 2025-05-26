@@ -32,42 +32,42 @@
 		</div>
 	</div>
 
-	<!-- Table Selection Card -->
-	<div class="card">
-		<div class="card-header">
-			<h5 class="card-title">
-				<i class="bi bi-table"></i>
-				Select Lookup Table
-			</h5>
-		</div>
-		<div class="card-body">
-			<div class="row align-items-end">
-				<div class="col-md-8">
-					<label class="form-label">Choose Table</label>
-					<SfDropDownList TValue="string" 
-								   TItem="LookupTableDto" 
-								   DataSource="@availableTables" 
-								   @bind-Value="@selectedTableName"
-								   Placeholder="-- Select a lookup table --"
-								   CssClass="lookup-dropdown"
-								   Enabled="@(!isLoading)">
-						<DropDownListFieldSettings Value="TableName" Text="Description"></DropDownListFieldSettings>
-						<DropDownListEvents TValue="string" TItem="LookupTableDto" ValueChange="OnTableSelectionChanged"></DropDownListEvents>
-					</SfDropDownList>
-				</div>
-				<div class="col-md-4">
-					@if (!string.IsNullOrEmpty(selectedTableName))
-					{
-							<div class="table-info">
-								<small class="text-muted">
-									<strong>Records:</strong> @totalRecords
-								</small>
-							</div>
-					}
-				</div>
-			</div>
-		</div>
-	</div>
+    <!-- Table Selection Card -->
+    <div class="selection-card">
+        <div class="card-header">
+            <h5 class="card-title">
+                <i class="bi bi-table"></i>
+                Select Lookup Table
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row align-items-end">
+                <div class="col-md-8">
+                    <label class="form-label">Choose Table</label>
+                    <SfDropDownList TValue="string" 
+                                   TItem="LookupTableDto" 
+                                   DataSource="@availableTables" 
+                                   @bind-Value="@selectedTableName"
+                                   Placeholder="-- Select a lookup table --"
+                                   CssClass="lookup-dropdown"
+                                   Enabled="@(!isLoading)">
+                        <DropDownListFieldSettings Value="TableName" Text="Description"></DropDownListFieldSettings>
+                        <DropDownListEvents TValue="string" TItem="LookupTableDto" ValueChange="OnTableSelectionChanged"></DropDownListEvents>
+                    </SfDropDownList>
+                </div>
+                <div class="col-md-4">
+                    @if (!string.IsNullOrEmpty(selectedTableName))
+                    {
+                        <div class="table-info">
+                            <small class="text-muted">
+                                <strong>Records:</strong> @totalRecords
+                            </small>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
 
 	<!-- Data Grid Card -->
 	@if (!string.IsNullOrEmpty(selectedTableName))
