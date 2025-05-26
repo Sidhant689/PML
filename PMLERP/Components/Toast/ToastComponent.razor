@@ -1,0 +1,43 @@
+﻿@implements IDisposable
+@inject IToastService ToastService
+
+<SfToast @ref="toastRef" Width="400">
+    <ToastPosition X="Center" Y="Top"></ToastPosition>
+    <ToastAnimationSettings>
+        <ToastShowAnimationSettings Effect="@ToastEffect.SlideTopIn"></ToastShowAnimationSettings>
+        <ToastHideAnimationSettings Effect="@ToastEffect.SlideTopOut"></ToastHideAnimationSettings>
+    </ToastAnimationSettings>
+</SfToast>
+
+@code {
+    private SfToast toastRef;
+
+    protected override void OnInitialized()
+    {
+        ToastService.OnShow += ShowToast;
+    }
+
+    private async void ShowToast(ToastMessage message)
+    {
+        if (toastRef == null || message == null)
+            return;
+
+        var toastModel = new ToastModel
+            {
+                Title = message.Title,
+                Content = message.Content,
+                CssClass = message.CssClass,
+                Timeout = message.Timeout
+            };
+
+        await toastRef.ShowAsync(toastModel);
+    }
+
+    public void Dispose()
+    {
+        if (ToastService != null)
+        {
+            ToastService.OnShow -= ShowToast;
+        }
+    }
+}

@@ -72,6 +72,9 @@ namespace PMLERP
             // Register auth service (removed duplicate)
             builder.Services.AddScoped<IAuthService, AuthService>();
 
+            // Register toast service
+            builder.Services.AddScoped<IToastService, ToastService>();
+
             return builder.Build();
         }
     }

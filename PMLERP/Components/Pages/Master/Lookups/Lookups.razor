@@ -2,6 +2,7 @@
 
 
 @inject IJSRuntime JSRuntime
+@inject IToastService ToastService
 
 <PageTitle>Master Lookups - Jewel ERP</PageTitle>
 
@@ -175,22 +176,7 @@
     }
 </div>
 
-<!-- Toast Notification -->
-<SfToast @ref="toastRef" Width="400">
-    <ToastPosition X="@PositionX" Y="@PositionY"></ToastPosition>
-    <ToastAnimationSettings>
-        <ToastShowAnimationSettings Effect="@ToastEffect.SlideRightIn"></ToastShowAnimationSettings>
-        <ToastHideAnimationSettings Effect="@ToastEffect.SlideRightOut"></ToastHideAnimationSettings>
-    </ToastAnimationSettings>
-</SfToast>
-
 @code {
-    // Component references
-    private SfToast toastRef;
-
-	// Position settings for toast notifications
-    private string PositionX = "Center";
-    private string PositionY = "Bottom";
 
     // Data properties
     private List<LookupTableDto> availableTables = new();
@@ -245,7 +231,7 @@
         }
         catch (Exception ex)
         {
-            await ShowToast("Error", $"Failed to load tables: {ex.Message}", "e-toast-danger");
+            await ToastService.ShowErrorAsync("Error", $"Failed to load tables: {ex.Message}");
         }
         finally
         {
@@ -292,16 +278,16 @@
                 
                 totalRecords = gridData.Count;
                 
-                await ShowToast("Success", $"Loaded {totalRecords} records from {GetSelectedTableDescription()}", "e-toast-success");
+                await ToastService.ShowSuccessAsync("Success", $"Loaded {totalRecords} records from {GetSelectedTableDescription()}");
             }
             else
             {
-                await ShowToast("Error", $"Entity type not found for table: {selectedTableName}", "e-toast-warning");
+                await ToastService.ShowWarningAsync("Error", $"Entity type not found for table: {selectedTableName}");
             }
         }
         catch (Exception ex)
         {
-            await ShowToast("Error", $"Failed to load data: {ex.Message}", "e-toast-danger");
+            await ToastService.ShowErrorAsync("Error", $"Failed to load data: {ex.Message}");
         }
         finally
         {
@@ -464,44 +450,31 @@
 
     private async Task AddNewRecord()
     {
-        await ShowToast("Info", "Add new record functionality will be implemented", "e-toast-info");
+        await ToastService.ShowInfoAsync ("Info", "Add new record functionality will be implemented");
         // Implement add new record logic
     }
 
     private async Task EditRecord(IDictionary<string, object> record)
     {
-        await ShowToast("Info", "Edit record functionality will be implemented", "e-toast-info");
+        await ToastService.ShowInfoAsync("Info", "Edit record functionality will be implemented");
         // Implement edit record logic
     }
 
     private async Task DeleteRecord(IDictionary<string, object> record)
     {
-        await ShowToast("Info", "Delete record functionality will be implemented", "e-toast-info");
+        await ToastService.ShowInfoAsync("Info", "Delete record functionality will be implemented");
         // Implement delete record logic
     }
 
     private async Task ExportData()
     {
-        await ShowToast("Info", "Export functionality will be implemented", "e-toast-info");
+        await ToastService.ShowInfoAsync("Info", "Export functionality will be implemented");
         // Implement export logic
     }
 
     private async Task OnRecordDoubleClick(RecordDoubleClickEventArgs<IDictionary<string, object>> args)
     {
         await EditRecord(args.RowData);
-    }
-
-    private async Task ShowToast(string title, string content, string cssClass)
-    {
-        var toastModel = new ToastModel
-        {
-            Title = title,
-            Content = content,
-            CssClass = cssClass,
-            Timeout = 4000
-        };
-        
-        await toastRef.ShowAsync(toastModel);
     }
 }
 
