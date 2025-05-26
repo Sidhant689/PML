@@ -10,21 +10,34 @@ using Pml.Domain.IRepositories.Master;
 
 namespace Pml.Infrastructure.Master.Repositories
 {
+    /// <summary>
+    /// Repository for managing SystemAdminUser entities in the database.
+    /// </summary>
     public class SystemAdminRepository : ISystemAdminRepository
     {
         private readonly MasterDbContext _context;
         private readonly NpgsqlConnection _connection;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SystemAdminRepository"/> class.
+        /// </summary>
+        /// <param name="context">The master database context.</param>
+        /// <param name="connection">The PostgreSQL connection.</param>
         public SystemAdminRepository(MasterDbContext context, NpgsqlConnection connection)
         {
             _context = context;
             _connection = connection;
         }
 
+        /// <summary>
+        /// Creates a new system admin user in the database.
+        /// </summary>
+        /// <param name="admin">The admin user to create.</param>
+        /// <returns>The created <see cref="SystemAdminUser"/>.</returns>
         public async Task<SystemAdminUser> CreateAdminAsync(SystemAdminUser admin)
         {
             try
             {
-                
                 using (var connection = new NpgsqlConnection(_connection.ConnectionString))
                 {
                     connection.Open();
@@ -42,6 +55,11 @@ namespace Pml.Infrastructure.Master.Repositories
             }
         }
 
+        /// <summary>
+        /// Deletes a system admin user by ID.
+        /// </summary>
+        /// <param name="id">The ID of the admin user to delete.</param>
+        /// <returns>True if the user was deleted; otherwise, false.</returns>
         public async Task<bool> DeleteAdminAsync(int id)
         {
             try
@@ -61,6 +79,10 @@ namespace Pml.Infrastructure.Master.Repositories
             }
         }
 
+        /// <summary>
+        /// Retrieves all system admin users from the database.
+        /// </summary>
+        /// <returns>An enumerable of <see cref="SystemAdminUser"/>.</returns>
         public async Task<IEnumerable<SystemAdminUser>> GetAllAdminsAsync()
         {
             try
@@ -80,6 +102,11 @@ namespace Pml.Infrastructure.Master.Repositories
             }
         }
 
+        /// <summary>
+        /// Retrieves a system admin user by ID.
+        /// </summary>
+        /// <param name="id">The ID of the admin user.</param>
+        /// <returns>The <see cref="SystemAdminUser"/> if found; otherwise, null.</returns>
         public async Task<SystemAdminUser> GetByIdAsync(int id)
         {
             try
@@ -99,6 +126,11 @@ namespace Pml.Infrastructure.Master.Repositories
             }
         }
 
+        /// <summary>
+        /// Retrieves a system admin user by refresh token.
+        /// </summary>
+        /// <param name="refreshToken">The refresh token.</param>
+        /// <returns>The <see cref="SystemAdminUser"/> if found; otherwise, null.</returns>
         public async Task<SystemAdminUser> GetByRefreshTokenAsync(string refreshToken)
         {
             try
@@ -118,6 +150,11 @@ namespace Pml.Infrastructure.Master.Repositories
             }
         }
 
+        /// <summary>
+        /// Retrieves a system admin user by username.
+        /// </summary>
+        /// <param name="username">The username.</param>
+        /// <returns>The <see cref="SystemAdminUser"/> if found; otherwise, null.</returns>
         public async Task<SystemAdminUser> GetByUsernameAsync(string username)
         {
             try
@@ -137,6 +174,11 @@ namespace Pml.Infrastructure.Master.Repositories
             }
         }
 
+        /// <summary>
+        /// Updates an existing system admin user in the database.
+        /// </summary>
+        /// <param name="admin">The admin user with updated information.</param>
+        /// <returns>The updated <see cref="SystemAdminUser"/>.</returns>
         public async Task<SystemAdminUser> UpdateAdminAsync(SystemAdminUser admin)
         {
             try
@@ -145,17 +187,17 @@ namespace Pml.Infrastructure.Master.Repositories
                 {
                     connection.Open();
                     const string query = @"
-                        UPDATE SystemAdminUser
-                        SET Name = @Name, 
-                            UserName = @UserName,
-                            Password = @Password,
-                            UserStatus = @UserStatus,
-                            UserEmail = @UserEmail,
-                            UserPhone = @UserPhone,
-                            UserAddress = @UserAddress,
-                            RefreshToken = @RefreshToken,
-                            RefreshTokenExpiry = @RefreshTokenExpiry
-                        WHERE Id = @Id";
+                            UPDATE SystemAdminUser
+                            SET Name = @Name, 
+                                UserName = @UserName,
+                                Password = @Password,
+                                UserStatus = @UserStatus,
+                                UserEmail = @UserEmail,
+                                UserPhone = @UserPhone,
+                                UserAddress = @UserAddress,
+                                RefreshToken = @RefreshToken,
+                                RefreshTokenExpiry = @RefreshTokenExpiry
+                            WHERE Id = @Id";
                     var data = await connection.QueryFirstOrDefaultAsync<SystemAdminUser>(query, admin);
                     connection.Close();
                     return data;
