@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using MudBlazor.Services;
 using PMLERP.Helpers;
 using PMLERP.IServices;
 using PMLERP.Services;
@@ -43,9 +42,6 @@ namespace PMLERP
 
             // Add authentication support
             builder.Services.AddAuthorizationCore();
-
-            // Add MudBlazor for UI components (optional but recommended)
-            builder.Services.AddMudServices();
 
             // Register secure storage
             //builder.Services.AddSingleton<ISecureStorage>(SecureStorage.Default);

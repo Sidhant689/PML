@@ -3,9 +3,11 @@
 @layout LoginLayout
 
 @inject IAuthService AuthService
+@inject IToastService ToastService
 @inject NavigationManager NavigationManager
-@inject ISnackbar Snackbar
 @inject IJSRuntime JSRuntime
+
+<ToastComponent/>
 
 <div class="login-page-wrapper @(isDarkMode ? "dark-mode" : "")">
     <div class="login-container">
@@ -18,7 +20,7 @@
         </div>
 
         <div class="login-card">
-            <div class="card-header">
+            <div class="card-header" style="justify-content: center">
                 <div class="card-header-content">
                     <h3 class="login-title">Administrator Login</h3>
                     <p class="login-subtitle">Access admin dashboard</p>
@@ -33,10 +35,10 @@
                         <div class="input-with-icon">
                             <i class="bi bi-person input-icon"></i>
                             <input type="text"
-                                   id="username"
-                                   class="form-control"
-                                   @bind="loginModel.Username"
-                                   placeholder="Enter your username" />
+                            id="username"
+                            class="form-control"
+                            @bind="loginModel.Username"
+                            placeholder="Enter your username" />
                         </div>
                         <ValidationMessage For="@(() => loginModel.Username)" class="validation-message" />
                     </div>
@@ -49,10 +51,10 @@
                         <div class="input-with-icon">
                             <i class="bi bi-lock input-icon"></i>
                             <input type="@(showPassword ? "text" : "password")"
-                                   id="password"
-                                   class="form-control password-input"
-                                   @bind="loginModel.Password"
-                                   placeholder="Enter your password" />
+                            id="password"
+                            class="form-control password-input"
+                            @bind="loginModel.Password"
+                            placeholder="Enter your password" />
                             <button type="button" class="password-toggle-btn" @onclick="TogglePasswordVisibility">
                                 <i class="bi @(showPassword ? "bi-eye-slash" : "bi-eye")"></i>
                             </button>
@@ -69,8 +71,8 @@
 
                     <div class="form-group login-button-container">
                         <button type="submit"
-                                class="btn login-button"
-                                disabled="@isLoading">
+                        class="btn login-button"
+                        disabled="@isLoading">
                             @if (isLoading)
                             {
                                 <div class="spinner-border spinner-border-sm me-2" role="status">
@@ -134,12 +136,12 @@
             }
             else
             {
-                Snackbar.Add("Invalid username or password", Severity.Error);
+                await ToastService.ShowErrorAsync("Error", "Invalid username or password");
             }
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            await ToastService.ShowErrorAsync("Error", ex.Message);
         }
         finally
         {
