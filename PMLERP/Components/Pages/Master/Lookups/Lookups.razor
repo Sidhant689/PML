@@ -78,14 +78,40 @@
                     @GetSelectedTableDescription() Data
                 </h5>
                 <div class="card-actions">
+                    <SfButton CssClass="e-outline e-info e-small"
+                              IconCss="bi bi-eye"
+                              OnClick="() => showColumnSelector = !showColumnSelector">
+                        Columns
+                    </SfButton>
                     <SfButton CssClass="e-success e-small" IconCss="bi bi-plus-circle" OnClick="AddNewRecord">
                         Add New
                     </SfButton>
                     <SfButton CssClass="e-info e-small" IconCss="bi bi-download" OnClick="ExportData">
                         Export
                     </SfButton>
+                    @if (showColumnSelector)
+                    {
+                        <div class="column-selector-panel p-3 border rounded bg-white shadow-sm"
+                             style="position:absolute; z-index:1000; right:1rem; top:30px; width:220px;">
+                            <h6>Show / Hide Columns</h6>
+                            @foreach (var col in gridColumns)
+                            {
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           id="@($"chk_{col.Field}")"
+                                           @bind="col.IsVisible" />
+                                    <label class="form-check-label" for="@($"chk_{col.Field}")">
+                                        @col.HeaderText
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    }
                 </div>
             </div>
+                 
+        
             <div class="card-body">
                 @if (isLoading)
                 {
@@ -113,17 +139,22 @@
                         <GridSelectionSettings Type="Syncfusion.Blazor.Grids.SelectionType.Single"></GridSelectionSettings>
                         
                         <GridColumns>
-                            @foreach (var column in gridColumns)
+                            @* Only render columns the user has left checked *@
+                            @foreach (var column in gridColumns.Where(c => c.IsVisible))
                             {
-                                <GridColumn Field="@column.Field" 
-                                          HeaderText="@column.HeaderText" 
-                                          Width="@column.Width"
-                                          Type="@column.Type"
-                                          Format="@column.Format"
-                                          AllowEditing="@column.AllowEditing">
+                                <GridColumn Field="@column.Field"
+                                            HeaderText="@column.HeaderText"
+                                            Width="@column.Width"
+                                            Type="@column.Type"
+                                            Format="@column.Format"
+                                            AllowEditing="@column.AllowEditing">
                                 </GridColumn>
                             }
-                            <GridColumn HeaderText="Actions" Width="120" AllowSorting="false" AllowFiltering="false">
+                            <GridColumn 
+                                        HeaderText="Actions"
+                                        Width="120"
+                                        AllowSorting="false"
+                                        AllowFiltering="false">
                                 <Template>
                                     @{
                                         var data = (context as IDictionary<string, object>);
@@ -191,7 +222,7 @@
 	// Position settings for toast notifications
     private string PositionX = "Center";
     private string PositionY = "Bottom";
-
+    private bool showColumnSelector = false;
     // Data properties
     private List<LookupTableDto> availableTables = new();
     private string selectedTableName = string.Empty;
@@ -212,6 +243,7 @@
         public ColumnType Type { get; set; } = ColumnType.String;
         public string Format { get; set; }
         public bool AllowEditing { get; set; } = true;
+        public bool IsVisible { get; set; } = true;
     }
 
     protected override async Task OnInitializedAsync()
@@ -655,6 +687,7 @@
     }
 
     .card-actions {
+        position:relative;
         display: flex;
         gap: 0.5rem;
     }

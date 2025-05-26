@@ -18,6 +18,7 @@ namespace Pml.Shared.Entities.Models.Master
         public string FormName { get; set; }
         public string MenuHandle { get; set; }
         public string Handle { get; set; }
+
     }
 
     public class MenuTmplate { }
