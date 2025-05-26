@@ -12,6 +12,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Pml.Application.Services
 {
+    /// <summary>
+    /// Service for handling authentication logic such as login, token refresh, and token revocation.
+    /// </summary>
     public class AuthService : IAuthService
     {
         private readonly ITokenRepository _tokenRepository;
@@ -19,6 +22,13 @@ namespace Pml.Application.Services
         private readonly ISystemAdminRoleRepository _systemAdminRoleRepository;
         private readonly ILogger<AuthService> _logger;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AuthService"/> class.
+        /// </summary>
+        /// <param name="tokenRepository">Token repository for generating and validating tokens.</param>
+        /// <param name="systemAdminRepository">Repository for system admin users.</param>
+        /// <param name="systemAdminRoleRepository">Repository for system admin roles.</param>
+        /// <param name="logger">Logger instance.</param>
         public AuthService(
             ITokenRepository tokenRepository,
             ISystemAdminRepository systemAdminRepository,
@@ -31,6 +41,11 @@ namespace Pml.Application.Services
             _logger = logger;
         }
 
+        /// <summary>
+        /// Authenticates a user and generates access and refresh tokens.
+        /// </summary>
+        /// <param name="request">Authentication request containing username and password.</param>
+        /// <returns>Authentication response with tokens and user info.</returns>
         public async Task<AuthResponse> LoginAsync(AuthRequest request)
         {
             // Validate credentials
@@ -57,13 +72,13 @@ namespace Pml.Application.Services
                 };
             }
 
-            // Get roles
+            // Get roles for the authenticated user
             var roles = await _systemAdminRoleRepository.GetRolesByAdminIdAsync(user.Id);
 
-            // Log authentication success (don't log sensitive role details in production)
+            // Log authentication success (avoid logging sensitive details in production)
             _logger.LogInformation("User {Username} authenticated successfully", user.UserName);
 
-            // Generate tokens
+            // Generate access and refresh tokens
             var accessToken = _tokenRepository.GenerateAccessToken(user.Id, user.UserName, user.UserEmail, roles);
             var refreshToken = _tokenRepository.GenerateRefreshToken();
             var refreshTokenExpiry = _tokenRepository.CalculateRefreshTokenExpiry();
@@ -73,6 +88,7 @@ namespace Pml.Application.Services
             user.RefreshTokenExpiry = refreshTokenExpiry;
             await _systemAdminRepository.UpdateAdminAsync(user);
 
+            // Return authentication response
             return new AuthResponse
             {
                 IsSuccess = true,
@@ -87,15 +103,20 @@ namespace Pml.Application.Services
             };
         }
 
+        /// <summary>
+        /// Refreshes the access token using a valid refresh token.
+        /// </summary>
+        /// <param name="request">Refresh token request containing expired access token and refresh token.</param>
+        /// <returns>Authentication response with new tokens and user info.</returns>
         public async Task<AuthResponse> RefreshTokenAsync(RefreshTokenRequest request)
         {
             try
             {
-                // Get principal from expired token
+                // Get principal from expired access token
                 var principal = _tokenRepository.GetPrincipalFromExpiredToken(request.AccessToken);
                 var username = principal.Identity.Name;
 
-                // Get user
+                // Get user by username
                 var user = await _systemAdminRepository.GetByUsernameAsync(username);
                 if (user == null)
                 {
@@ -106,7 +127,7 @@ namespace Pml.Application.Services
                     };
                 }
 
-                // Validate refresh token
+                // Validate refresh token and its expiry
                 if (user.RefreshToken != request.RefreshToken ||
                     user.RefreshTokenExpiry <= DateTime.UtcNow)
                 {
@@ -117,10 +138,10 @@ namespace Pml.Application.Services
                     };
                 }
 
-                // Get current roles (important for security)
+                // Get current roles for the user
                 var roles = await _systemAdminRoleRepository.GetRolesByAdminIdAsync(user.Id);
 
-                // Generate new tokens WITH roles
+                // Generate new access and refresh tokens
                 var newAccessToken = _tokenRepository.GenerateAccessToken(user.Id, user.UserName, user.UserEmail, roles);
                 var newRefreshToken = _tokenRepository.GenerateRefreshToken();
                 var refreshTokenExpiry = _tokenRepository.CalculateRefreshTokenExpiry();
@@ -130,6 +151,7 @@ namespace Pml.Application.Services
                 user.RefreshTokenExpiry = refreshTokenExpiry;
                 await _systemAdminRepository.UpdateAdminAsync(user);
 
+                // Return authentication response
                 return new AuthResponse
                 {
                     IsSuccess = true,
@@ -154,6 +176,11 @@ namespace Pml.Application.Services
             }
         }
 
+        /// <summary>
+        /// Revokes the refresh token for a user, effectively logging them out.
+        /// </summary>
+        /// <param name="username">Username of the user whose token is to be revoked.</param>
+        /// <returns>True if token was revoked, otherwise false.</returns>
         public async Task<bool> RevokeTokenAsync(string username)
         {
             var user = await _systemAdminRepository.GetByUsernameAsync(username);
@@ -162,7 +189,7 @@ namespace Pml.Application.Services
                 return false;
             }
 
-            // Revoke refresh token
+            // Revoke refresh token by clearing it and setting expiry to now
             user.RefreshToken = null;
             user.RefreshTokenExpiry = DateTime.UtcNow; // Set to past date
             await _systemAdminRepository.UpdateAdminAsync(user);
@@ -171,6 +198,12 @@ namespace Pml.Application.Services
             return true;
         }
 
+        /// <summary>
+        /// Verifies the provided password against the stored hash.
+        /// </summary>
+        /// <param name="password">Plain text password.</param>
+        /// <param name="storedHash">Hashed password from the database.</param>
+        /// <returns>True if password matches the hash, otherwise false.</returns>
         private bool VerifyPasswordHash(string password, string storedHash)
         {
             return BCrypt.Net.BCrypt.Verify(password, storedHash);

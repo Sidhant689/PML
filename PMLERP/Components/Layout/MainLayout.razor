@@ -107,6 +107,7 @@
         <!-- Content Wrapper -->
         <div class="content-wrapper">
             @Body
+            <ToastComponent />
         </div>
     </main>
 </div>
@@ -412,38 +413,6 @@
 }
 
 <style>
-    /* Base Layout */
-    .app-layout {
-        display: flex;
-        height: calc(100vh - var(--topbar-height));
-        width: 100%;
-        position: relative;
-        overflow: hidden;
-        background-color: var(--bg-primary);
-        color: var(--text-primary);
-    }
-
-    /* Elegant Top Bar */
-    .topbar {
-        height: var(--topbar-height);
-        background-color: var(--bg-secondary);
-        border-bottom: 1px solid var(--border-color);
-        color: var(--text-primary);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0 1rem;
-        position: sticky;
-        top: 0;
-        z-index: 1050;
-        box-shadow: var(--shadow-sm);
-    }
-
-    .dark-mode .topbar {
-        background-color: var(--bg-secondary);
-        border-bottom-color: var(--border-color);
-    }
-
     /* Brand Styling */
     .brand {
         display: flex;

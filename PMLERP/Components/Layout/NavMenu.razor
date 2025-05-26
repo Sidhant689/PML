@@ -621,30 +621,6 @@
 		padding: 0.5rem 0;
 	}
 
-	.brand-icon {
-		color: #3b82f6;
-		font-size: 1.75rem;
-		filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
-	}
-
-	.brand-text {
-		display: flex;
-		flex-direction: column;
-	}
-
-	.brand-name {
-		font-weight: 700;
-		font-size: 1.125rem;
-		line-height: 1.2;
-		color: #3b82f6;
-	}
-
-	.brand-tagline {
-		font-size: 0.75rem;
-		opacity: 0.8;
-		color: var(--text-secondary);
-	}
-
 	/* Enhanced Sidebar Menu */
 	.sidebar-menu {
 		flex: 1;
@@ -699,17 +675,6 @@
 		background: linear-gradient(180deg, rgba(59, 130, 246, 0.02) 0%, transparent 100%);
 	}
 
-	.nav-item {
-		display: flex;
-		align-items: center;
-		padding: 0.75rem 1.25rem;
-		color: var(--text-primary);
-		text-decoration: none;
-		transition: all 0.2s ease;
-		border-radius: 0 25px 25px 0;
-		border-left: 3px solid transparent;
-		margin-right: 1rem;
-	}
 
 	.submenu-item {
 		padding: 0.6rem 1rem;
@@ -717,50 +682,10 @@
 		border-radius: 0 20px 20px 0;
 	}
 
-	.nav-item:hover {
-		background: linear-gradient(90deg, rgba(59, 130, 246, 0.08) 0%, rgba(59, 130, 246, 0.03) 100%);
-		color: #3b82f6;
-		transform: translateX(2px);
-	}
-
-	.dark-mode .nav-item:hover {
-		background: linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.05) 100%);
-	}
-
-	.nav-item.active {
-		background: linear-gradient(90deg, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0.06) 100%);
-		color: #3b82f6;
-		border-left-color: #3b82f6;
-		font-weight: 600;
-		box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
-	}
-
-	.dark-mode .nav-item.active {
-		background: linear-gradient(90deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%);
-	}
-
-	.nav-icon {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 24px;
-		height: 24px;
-		margin-right: 0.75rem;
-		color: currentColor;
-		opacity: 0.9;
-		transition: all 0.2s ease;
-	}
-
 	.nav-item:hover .nav-icon,
 	.nav-section-header:hover .nav-icon {
 		transform: scale(1.1);
 		opacity: 1;
-	}
-
-	.nav-text {
-		white-space: nowrap;
-		font-weight: 500;
-		font-size: 0.9375rem;
 	}
 
 	/* Enhanced Footer with System Status */
@@ -787,17 +712,6 @@
 		border-radius: 50%;
 		background-color: #10b981;
 		animation: pulse 2s infinite;
-	}
-	@@keyframes pulse {
-		0% {
-			box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
-		}
-		70% {
-			box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
-		}
-		100% {
-			box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
-		}
 	}
 
 	/* Scrollbar Styling */

@@ -71,11 +71,12 @@
         <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)" />
         <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="$(MauiVersion)" />
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.1" />
-        <PackageReference Include="MudBlazor" Version="8.6.0" />
         <PackageReference Include="Syncfusion.Blazor.Buttons" Version="29.2.5" />
         <PackageReference Include="Syncfusion.Blazor.Core" Version="29.2.5" />
         <PackageReference Include="Syncfusion.Blazor.DropDowns" Version="29.2.5" />
         <PackageReference Include="Syncfusion.Blazor.Grid" Version="29.2.5" />
+        <PackageReference Include="Syncfusion.Blazor.Popups" Version="29.2.5" />
+        <PackageReference Include="Syncfusion.Blazor.Spinner" Version="29.2.5" />
         <PackageReference Include="Syncfusion.Blazor.Themes" Version="29.2.5" />
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.5.0" />
     </ItemGroup>
