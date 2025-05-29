@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Pml.Shared.DTOs.Master.SystemAdminDTOs;
 using Pml.Application.IServices;
-using Pml.Domain.Entities.Models.Master;
+using Pml.Shared.Entities.Models.Master;
 
 namespace Pml.API.Controllers
 {

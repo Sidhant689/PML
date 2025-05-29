@@ -9,11 +9,11 @@ using Npgsql;
 using Pml.Application.IServices;
 using Pml.Application.Services;
 using Pml.Domain.Authentication;
-using Pml.Domain.Entities.Settings;
 using Pml.Domain.IRepositories.Master;
 using Pml.Infrastructure.Authentication;
 using Pml.Infrastructure.Master;
 using Pml.Infrastructure.Master.Repositories;
+using Pml.Shared.Entities.Settings;
 
 namespace Pml.Application.Extensions
 {
@@ -44,9 +44,11 @@ namespace Pml.Application.Extensions
             // Register Repositories
             services.AddScoped<ISystemAdminRepository, SystemAdminRepository>();
             services.AddScoped<ISystemAdminRoleRepository, SystemAdminRoleRepository>();
+            services.AddScoped<ICompanyRepository, CompanyRepository>();
 
             // Register Services
             services.AddScoped<ISystemAdminService, SystemAdminService>();
+            services.AddScoped<ICompanyService, CompanyService>();
 
             // Add HTTP context accessor
             services.AddHttpContextAccessor();

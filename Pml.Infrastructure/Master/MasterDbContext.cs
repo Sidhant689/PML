@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Npgsql;
-using Pml.Domain.Entities.Settings;
+using Pml.Shared.Entities.Settings;
 
 namespace Pml.Infrastructure.Master
 {
