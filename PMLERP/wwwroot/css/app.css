@@ -246,6 +246,7 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
 }
 
 .card-actions {
+    position:relative;
     display: flex;
     gap: 0.5rem;
 }
