@@ -4,8 +4,8 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
-using Npgsql;
 using Pml.Shared.Entities.Settings;
 
 namespace Pml.Infrastructure.Master
@@ -19,6 +19,6 @@ namespace Pml.Infrastructure.Master
             _connectionString = options.Value.MasterConnectionString;
         }
 
-        public IDbConnection CreateConnection() => new NpgsqlConnection(_connectionString);
+        public IDbConnection CreateConnection() => new SqlConnection(_connectionString);
     }
 }

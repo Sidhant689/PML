@@ -1,11 +1,11 @@
 ﻿using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Npgsql;
 using Pml.Application.IServices;
 using Pml.Application.Services;
 using Pml.Domain.Authentication;
@@ -30,9 +30,9 @@ namespace Pml.Application.Extensions
                 sp.GetRequiredService<IOptions<DatabaseSettings>>().Value);
 
             // Register NpgsqlConnection factory
-            services.AddTransient<NpgsqlConnection>(sp => {
+            services.AddTransient<SqlConnection>(sp => {
                 var dbSettings = sp.GetRequiredService<DatabaseSettings>();
-                return new NpgsqlConnection(dbSettings.MasterConnectionString);
+                return new SqlConnection(dbSettings.MasterConnectionString);
             });
 
             // Add PostgreSQL master database context

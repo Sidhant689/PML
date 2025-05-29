@@ -4,13 +4,16 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using PMLERP.Helpers;
 using PMLERP.IServices;
+using PMLERP.IServices.Master;
 using PMLERP.Services;
+using PMLERP.Services.Master;
 using Syncfusion.Blazor;
 
 namespace PMLERP
 {
     public static class MauiProgram
     {
+         
         public static MauiApp CreateMauiApp()
         {
             var builder = MauiApp.CreateBuilder();

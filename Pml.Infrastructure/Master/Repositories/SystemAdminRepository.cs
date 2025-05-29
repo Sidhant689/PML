@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Dapper;
-using Npgsql;
+using Microsoft.Data.SqlClient;
 using Pml.Domain.IRepositories.Master;
 using Pml.Shared.Entities.Models.Master;
 
@@ -16,14 +16,14 @@ namespace Pml.Infrastructure.Master.Repositories
     public class SystemAdminRepository : ISystemAdminRepository
     {
         private readonly MasterDbContext _context;
-        private readonly NpgsqlConnection _connection;
+        private readonly SqlConnection _connection;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SystemAdminRepository"/> class.
         /// </summary>
         /// <param name="context">The master database context.</param>
         /// <param name="connection">The PostgreSQL connection.</param>
-        public SystemAdminRepository(MasterDbContext context, NpgsqlConnection connection)
+        public SystemAdminRepository(MasterDbContext context, SqlConnection connection)
         {
             _context = context;
             _connection = connection;
@@ -38,7 +38,7 @@ namespace Pml.Infrastructure.Master.Repositories
         {
             try
             {
-                using (var connection = new NpgsqlConnection(_connection.ConnectionString))
+                using (var connection = new SqlConnection(_connection.ConnectionString))
                 {
                     connection.Open();
                     var query = "INSERT INTO systemadminuser (Username, Email, PasswordHash, RefreshToken, RefreshTokenExpiry, IsSuperAdmin) " +
@@ -64,7 +64,7 @@ namespace Pml.Infrastructure.Master.Repositories
         {
             try
             {
-                using (var connection = new NpgsqlConnection(_connection.ConnectionString))
+                using (var connection = new SqlConnection(_connection.ConnectionString))
                 {
                     connection.Open();
                     var query = "DELETE FROM systemadminuser WHERE Id = @Id";
@@ -87,7 +87,7 @@ namespace Pml.Infrastructure.Master.Repositories
         {
             try
             {
-                using (var connection = new NpgsqlConnection(_connection.ConnectionString))
+                using (var connection = new SqlConnection(_connection.ConnectionString))
                 {
                     connection.Open();
                     var query = "SELECT * FROM systemadminuser";
@@ -111,7 +111,7 @@ namespace Pml.Infrastructure.Master.Repositories
         {
             try
             {
-                using (var connection = new NpgsqlConnection(_connection.ConnectionString))
+                using (var connection = new SqlConnection(_connection.ConnectionString))
                 {
                     connection.Open();
                     var query = "SELECT * FROM systemadminuser WHERE Id = @Id";
@@ -135,7 +135,7 @@ namespace Pml.Infrastructure.Master.Repositories
         {
             try
             {
-                using (var connection = new NpgsqlConnection(_connection.ConnectionString))
+                using (var connection = new SqlConnection(_connection.ConnectionString))
                 {
                     connection.Open();
                     var query = "SELECT * FROM systemadminuser WHERE RefreshToken = @RefreshToken";
@@ -159,10 +159,10 @@ namespace Pml.Infrastructure.Master.Repositories
         {
             try
             {
-                using (var connection = new NpgsqlConnection(_connection.ConnectionString))
+                using (var connection = new SqlConnection(_connection.ConnectionString))
                 {
                     connection.Open();
-                    var query = "SELECT * FROM systemadminuser WHERE Username = @Username";
+                    var query = "SELECT * FROM dbo.systemadminuser WHERE Username = @Username";
                     var data = await connection.QueryFirstOrDefaultAsync<SystemAdminUser>(query, new { Username = username });
                     connection.Close();
                     return data;
@@ -183,7 +183,7 @@ namespace Pml.Infrastructure.Master.Repositories
         {
             try
             {
-                using (var connection = new NpgsqlConnection(_connection.ConnectionString))
+                using (var connection = new SqlConnection(_connection.ConnectionString))
                 {
                     connection.Open();
                     const string query = @"

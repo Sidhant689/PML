@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Pml.Shared.Entities.Models.Client;
 
 namespace Pml.Shared.Entities.Models.Master
 {
@@ -19,15 +20,12 @@ namespace Pml.Shared.Entities.Models.Master
         public static readonly Dictionary<string, Type> EntityMap = new()
         {
             { MenuMaster, typeof(MenuMaster) },
-            { MenuTemplate, typeof(MenuTmplate) },
-            { MenuUserTemplate, typeof(MenuUserTemplate) },
             { SystemAdminUser, typeof(SystemAdminUser) },
             { SystemAdminRole, typeof(SystemAdminRole) },
             { SystemAdminUserRole, typeof(SystemAdminUserRole) },
             { Company, typeof(Company) },
             { CompanyDatabase, typeof(CompanyDatabase) },
-            { CompanyUser, typeof(CompanyUser) },
-            { CompanyUserRole, typeof(CompanyUserRole) },
+            { CompanyUser, typeof(User) },
         };
     }
 }

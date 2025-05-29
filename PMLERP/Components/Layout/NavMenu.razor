@@ -140,6 +140,60 @@
 			}
 		</NavLink>
 
+		<!-- User & Role Management -->
+		<div class="nav-section">
+			@if (!IsCollapsed)
+			{
+				<div class="nav-section-header @(userRoleMenuOpen ? "active" : "")" onclick="@(() => ToggleSubmenu("userrole"))">
+					<div class="d-flex align-items-center">
+						<div class="nav-icon">
+							<i class="bi bi-people"></i>
+						</div>
+						<span class="nav-text">User & Role Management</span>
+					</div>
+					<i class="bi @(userRoleMenuOpen ? "bi-chevron-down" : "bi-chevron-right") nav-arrow"></i>
+				</div>
+
+				@if (userRoleMenuOpen)
+				{
+					<div class="submenu">
+						<NavLink class="nav-item submenu-item" href="users/admin">
+							<div class="nav-icon">
+								<i class="bi bi-person"></i>
+							</div>
+							<span class="nav-text">Admin Users</span>
+						</NavLink>
+						<NavLink class="nav-item submenu-item" href="roles/create">
+							<div class="nav-icon">
+								<i class="bi bi-shield-plus"></i>
+							</div>
+							<span class="nav-text">Role Creation</span>
+						</NavLink>
+						<NavLink class="nav-item submenu-item" href="permissions/mapping">
+							<div class="nav-icon">
+								<i class="bi bi-diagram-3"></i>
+							</div>
+							<span class="nav-text">Permission Mapping</span>
+						</NavLink>
+						<NavLink class="nav-item submenu-item" href="roles/assign">
+							<div class="nav-icon">
+								<i class="bi bi-person-check"></i>
+							</div>
+							<span class="nav-text">Assign Roles</span>
+						</NavLink>
+					</div>
+				}
+			}
+			else
+			{
+				<div class="nav-section-header" onclick="@(() => ToggleSubmenu("userrole"))">
+					<div class="nav-icon" title="User & Role Management">
+						<i class="bi bi-people-fill"></i>
+					</div>
+				</div>
+			}
+		</div>
+
 		<!-- Tenant Management Section -->
 		<div class="nav-section">
 			@if (!IsCollapsed)
@@ -189,60 +243,6 @@
 					<div class="nav-section-header" onclick="@(() => ToggleSubmenu("tenant"))">
 							<div class="nav-icon" title="Tenenat Management">
 							<i class="bi bi-building"></i>
-						</div>
-					</div>
-			}
-		</div>
-
-		<!-- User & Role Management -->
-		<div class="nav-section">
-			@if (!IsCollapsed)
-			{
-					<div class="nav-section-header @(userRoleMenuOpen ? "active" : "")" onclick="@(() => ToggleSubmenu("userrole"))">
-						<div class="d-flex align-items-center">
-							<div class="nav-icon">
-								<i class="bi bi-people-fill"></i>
-							</div>
-							<span class="nav-text">User & Role Management</span>
-						</div>
-						<i class="bi @(userRoleMenuOpen ? "bi-chevron-down" : "bi-chevron-right") nav-arrow"></i>
-					</div>
-
-				@if (userRoleMenuOpen)
-				{
-							<div class="submenu">
-								<NavLink class="nav-item submenu-item" href="users/admin">
-									<div class="nav-icon">
-										<i class="bi bi-person-gear"></i>
-									</div>
-									<span class="nav-text">Admin Users</span>
-								</NavLink>
-								<NavLink class="nav-item submenu-item" href="roles/create">
-									<div class="nav-icon">
-										<i class="bi bi-shield-plus"></i>
-									</div>
-									<span class="nav-text">Role Creation</span>
-								</NavLink>
-								<NavLink class="nav-item submenu-item" href="permissions/mapping">
-									<div class="nav-icon">
-										<i class="bi bi-diagram-3"></i>
-									</div>
-									<span class="nav-text">Permission Mapping</span>
-								</NavLink>
-								<NavLink class="nav-item submenu-item" href="roles/assign">
-									<div class="nav-icon">
-										<i class="bi bi-person-check"></i>
-									</div>
-									<span class="nav-text">Assign Roles</span>
-								</NavLink>
-							</div>
-				}
-			}
-			else
-			{
-					<div class="nav-section-header" onclick="@(() => ToggleSubmenu("userrole"))">
-							<div class="nav-icon" title="User & Role Management">
-							<i class="bi bi-people-fill"></i>
 						</div>
 					</div>
 			}

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Pml.Shared.DTOs.Master.Authentication;
 using Pml.Shared.ToastMessage;
 
-namespace PMLERP.IServices
+namespace PMLERP.IServices.Master
 {
     public interface IAuthService
     {

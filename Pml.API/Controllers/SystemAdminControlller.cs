@@ -24,7 +24,7 @@ namespace Pml.API.Controllers
         /// <param name="dto">The DTO containing admin details.</param>
         /// <returns>The created admin user details.</returns>
         [HttpPost("create")]
-        public async Task<IActionResult> CreateAdmin([FromBody] CreateSystemAdminDto dto)
+        public async Task<IActionResult> CreateAdmin([FromBody] SystemAdminUserDto dto)
         {
             try
             {
@@ -44,7 +44,7 @@ namespace Pml.API.Controllers
                 var created = await _adminService.CreateAdminAsync(admin);
 
                 // Map entity to response DTO
-                var response = new SystemAdminResponseDto
+                var response = new SystemAdminUserDto
                 {
                     Id = created.Id,
                     Name = created.Name,
@@ -70,7 +70,7 @@ namespace Pml.API.Controllers
         /// <param name="dto">The DTO containing updated admin details.</param>
         /// <returns>The updated admin user details.</returns>
         [HttpPut("update")]
-        public async Task<IActionResult> UpdateAdmin([FromBody] UpdateSystemAdminDto dto)
+        public async Task<IActionResult> UpdateAdmin([FromBody] SystemAdminUserDto dto)
         {
             try
             {
@@ -93,7 +93,7 @@ namespace Pml.API.Controllers
                     return NotFound("Admin not found.");
 
                 // Map entity to response DTO
-                var response = new SystemAdminResponseDto
+                var response = new SystemAdminUserDto
                 {
                     Id = updated.Id,
                     Name = updated.Name,
@@ -127,7 +127,7 @@ namespace Pml.API.Controllers
                 var admins = await _adminService.GetAllAdminsAsync();
 
                 // Map entities to response DTOs
-                var response = admins.Select(admin => new SystemAdminResponseDto
+                var response = admins.Select(admin => new SystemAdminUserDto
                 {
                     Id = admin.Id,
                     Name = admin.Name,
@@ -186,7 +186,7 @@ namespace Pml.API.Controllers
                     return NotFound("Admin not found.");
 
                 // Map entity to response DTO
-                var response = new SystemAdminResponseDto
+                var response = new SystemAdminUserDto
                 {
                     Id = admin.Id,
                     Name = admin.Name,

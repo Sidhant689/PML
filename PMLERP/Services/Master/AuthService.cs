@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components.Authorization;
 using Pml.Shared.DTOs.Master.Authentication;
 using PMLERP.Helpers;
-using PMLERP.IServices;
+using PMLERP.IServices.Master;
 
-namespace PMLERP.Services
+namespace PMLERP.Services.Master
 {
     public class AuthService : IAuthService
     {

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Dapper;
-using Npgsql;
+using Microsoft.Data.SqlClient;
 using Pml.Domain.IRepositories.Master;
 
 namespace Pml.Infrastructure.Master.Repositories
@@ -15,14 +15,14 @@ namespace Pml.Infrastructure.Master.Repositories
     public class SystemAdminRoleRepository : ISystemAdminRoleRepository
     {
         private readonly MasterDbContext _dbContext;
-        private readonly NpgsqlConnection _connection;
+        private readonly SqlConnection _connection;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SystemAdminRoleRepository"/> class.
         /// </summary>
         /// <param name="dbContext">The master database context.</param>
         /// <param name="connection">The Npgsql database connection.</param>
-        public SystemAdminRoleRepository(MasterDbContext dbContext, NpgsqlConnection connection)
+        public SystemAdminRoleRepository(MasterDbContext dbContext, SqlConnection connection)
         {
             _dbContext = dbContext;
             _connection = connection;
@@ -38,7 +38,7 @@ namespace Pml.Infrastructure.Master.Repositories
             try
             {
                 // Create a new connection using the provided connection string
-                using (var connection = new NpgsqlConnection(_connection.ConnectionString))
+                using (var connection = new SqlConnection(_connection.ConnectionString))
                 {
                     // Open the connection asynchronously
                     await connection.OpenAsync();

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Dapper;
-using Npgsql;
+using Microsoft.Data.SqlClient;
 using Pml.Domain.IRepositories.Master;
 using Pml.Shared.Entities.Models.Master;
 
@@ -16,14 +16,14 @@ namespace Pml.Infrastructure.Master.Repositories
     public class CompanyRepository : ICompanyRepository
     {
         private readonly MasterDbContext _context;
-        private readonly NpgsqlConnection _connection;
+        private readonly SqlConnection _connection;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CompanyRepository"/> class.
         /// </summary>
         /// <param name="context">The master database context.</param>
         /// <param name="connection">The PostgreSQL connection.</param>
-        public CompanyRepository(MasterDbContext context, NpgsqlConnection connection)
+        public CompanyRepository(MasterDbContext context, SqlConnection connection)
         {
             _context = context;
             _connection = connection;
@@ -38,7 +38,7 @@ namespace Pml.Infrastructure.Master.Repositories
         {
             try
             {
-                using (var connection = new NpgsqlConnection(_connection.ConnectionString))
+                using (var connection = new SqlConnection(_connection.ConnectionString))
                 {
                     connection.Open();
                     var query = "SELECT * FROM company WHERE Id = @Id";
@@ -62,7 +62,7 @@ namespace Pml.Infrastructure.Master.Repositories
         {
             try
             {
-                using (var connection = new NpgsqlConnection(_connection.ConnectionString))
+                using (var connection = new SqlConnection(_connection.ConnectionString))
                 {
                     connection.Open();
                     var query = "SELECT * FROM company WHERE Code = @Code";
@@ -85,7 +85,7 @@ namespace Pml.Infrastructure.Master.Repositories
         {
             try
             {
-                using (var connection = new NpgsqlConnection(_connection.ConnectionString))
+                using (var connection = new SqlConnection(_connection.ConnectionString))
                 {
                     connection.Open();
                     var query = "SELECT * FROM company";
@@ -109,7 +109,7 @@ namespace Pml.Infrastructure.Master.Repositories
         {
             try
             {
-                using (var connection = new NpgsqlConnection(_connection.ConnectionString))
+                using (var connection = new SqlConnection(_connection.ConnectionString))
                 {
                     connection.Open();
                     var query = "SELECT * FROM companydatabase WHERE CompanyId = @CompanyId";
@@ -133,7 +133,7 @@ namespace Pml.Infrastructure.Master.Repositories
         {
             try
             {
-                using (var connection = new NpgsqlConnection(_connection.ConnectionString))
+                using (var connection = new SqlConnection(_connection.ConnectionString))
                 {
                     connection.Open();
                     var query = "SELECT * FROM companydatabase WHERE CompanyId = @CompanyId AND IsDefault = true";
@@ -157,7 +157,7 @@ namespace Pml.Infrastructure.Master.Repositories
         {
             try
             {
-                using (var connection = new NpgsqlConnection(_connection.ConnectionString))
+                using (var connection = new SqlConnection(_connection.ConnectionString))
                 {
                     connection.Open();
                     var query = "INSERT INTO company (Name, Address, Phone, Email, Website, Logo, TaxId, RegistrationNumber) " +
@@ -183,7 +183,7 @@ namespace Pml.Infrastructure.Master.Repositories
         {
             try
             {
-                using (var connection = new NpgsqlConnection(_connection.ConnectionString))
+                using (var connection = new SqlConnection(_connection.ConnectionString))
                 {
                     connection.Open();
                     var query = "UPDATE company SET Name = @Name, Address = @Address, Phone = @Phone, Email = @Email, " +
@@ -209,7 +209,7 @@ namespace Pml.Infrastructure.Master.Repositories
         {
             try
             {
-                using (var connection = new NpgsqlConnection(_connection.ConnectionString))
+                using (var connection = new SqlConnection(_connection.ConnectionString))
                 {
                     connection.Open();
                     var query = "DELETE FROM company WHERE Id = @Id";
@@ -233,7 +233,7 @@ namespace Pml.Infrastructure.Master.Repositories
         {
             try
             {
-                using (var connection = new NpgsqlConnection(_connection.ConnectionString))
+                using (var connection = new SqlConnection(_connection.ConnectionString))
                 {
                     connection.Open();
                     var query = "INSERT INTO companydatabase (CompanyId, Name, Type, ConnectionString, IsDefault) " +
@@ -259,7 +259,7 @@ namespace Pml.Infrastructure.Master.Repositories
         {
             try
             {
-                using (var connection = new NpgsqlConnection(_connection.ConnectionString))
+                using (var connection = new SqlConnection(_connection.ConnectionString))
                 {
                     connection.Open();
                     var query = "UPDATE companydatabase SET Name = @Name, Type = @Type, ConnectionString = @ConnectionString, " +
@@ -284,7 +284,7 @@ namespace Pml.Infrastructure.Master.Repositories
         {
             try
             {
-                using (var connection = new NpgsqlConnection(_connection.ConnectionString))
+                using (var connection = new SqlConnection(_connection.ConnectionString))
                 {
                     connection.Open();
                     var query = "DELETE FROM companydatabase WHERE Id = @Id";
