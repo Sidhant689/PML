@@ -4,6 +4,8 @@
 @inject IJSRuntime JSRuntime
 @inject IToastService ToastService
 
+@using Syncfusion.Blazor.Grids
+
 <PageTitle>Master Lookups - Jewel ERP</PageTitle>
 
 <div class="lookup-container">
@@ -51,7 +53,8 @@
                                    Placeholder="-- Select a lookup table --"
                                    CssClass="lookup-dropdown"
                                    Enabled="@(!isLoading)">
-                        <DropDownListFieldSettings Value="TableName" Text="Description"></DropDownListFieldSettings>
+
+                         <DropDownListFieldSettings Value="TableName" Text="Description"></DropDownListFieldSettings>
                         <DropDownListEvents TValue="string" TItem="LookupTableDto" ValueChange="OnTableSelectionChanged"></DropDownListEvents>
                     </SfDropDownList>
                 </div>
@@ -79,12 +82,39 @@
 					@GetSelectedTableDescription() Data
 					</h5>
 					<div class="card-actions">
+						<SfButton CssClass="e-info e-small"
+								  IconCss="bi bi-eye"
+								  OnClick="() => showColumnSelector = !showColumnSelector">
+							Columns
+						</SfButton>
+						
+						
 						<SfButton CssClass="e-success e-small" IconCss="bi bi-plus-circle" OnClick="AddNewRecord">
 							Add New
 						</SfButton>
 						<SfButton CssClass="e-info e-small" IconCss="bi bi-download" OnClick="ExportData">
 							Export
 						</SfButton>
+						@if (showColumnSelector)
+						{
+							<div class="column-selector-panel p-3 border rounded bg-white shadow-sm"
+								 style="position:absolute; z-index:1000;top:30px; width:220px;">
+								<h6>Show / Hide Columns</h6>
+								@foreach (var col in gridColumns)
+								{
+									<div class="form-check">
+										<input class="form-check-input"
+											   type="checkbox"
+											   id="@($"chk_{col.Field}")"
+											   @bind="col.IsVisible" />
+										<label class="form-check-label" for="@($"chk_{col.Field}")">
+											@col.HeaderText
+										</label>
+									</div>
+								}
+							</div>
+						}
+
 					</div>
 				</div>
 				<div class="card-body">
@@ -113,42 +143,55 @@
 								<GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Excel"></GridFilterSettings>
 								<GridSelectionSettings Type="Syncfusion.Blazor.Grids.SelectionType.Single"></GridSelectionSettings>
 
-								<GridColumns>
+						<GridColumns>
+							<!-- Render ALL columns (visible or hidden) -->
 							@foreach (var column in gridColumns)
 							{
-											<GridColumn Field="@column.Field" 
-													  HeaderText="@column.HeaderText" 
-													  Width="@column.Width"
-													  Type="@column.Type"
-													  Format="@column.Format"
-													  AllowEditing="@column.AllowEditing">
-											</GridColumn>
+								<GridColumn @key="@column.Field"
+											Field="@column.Field"
+											HeaderText="@column.HeaderText"
+											Width="@column.Width"
+											Type="@column.Type"
+											Format="@column.Format"
+											AllowEditing="@column.AllowEditing"
+											Visible="@column.IsVisible">
+									<!-- Syncfusion's visibility control -->
+								</GridColumn>
 							}
-									<GridColumn HeaderText="Actions" Width="120" AllowSorting="false" AllowFiltering="false">
-										<Template>
+
+							<!-- Static Actions Column (Always Last) -->
+							<GridColumn @key='"ActionsColumn"'
+										HeaderText="Actions"
+										Width="120"
+										AllowSorting="false"
+										AllowFiltering="false"
+										Visible="true">
+								<!-- Explicitly set to always show -->
+								<Template>
 									@{
 										var data = (context as IDictionary<string, object>);
 									}
-											<div class="action-buttons">
-												<SfButton CssClass="e-small e-primary e-icon-btn" 
-														 IconCss="bi bi-pencil" 
-														 OnClick="@(() => EditRecord(data))"
-														 Title="Edit">
-												</SfButton>
-												<SfButton CssClass="e-small e-danger e-icon-btn" 
-														 IconCss="bi bi-trash" 
-														 OnClick="@(() => DeleteRecord(data))"
-														 Title="Delete">
-												</SfButton>
-											</div>
-										</Template>
-									</GridColumn>
-								</GridColumns>
+									<div class="action-buttons">
+										<SfButton CssClass="e-small e-primary e-icon-btn"
+												  IconCss="bi bi-pencil"
+												  OnClick="@(() => EditRecord(data))"
+												  Title="Edit">
+										</SfButton>
+										<SfButton CssClass="e-small e-danger e-icon-btn"
+												  IconCss="bi bi-trash"
+												  OnClick="@(() => DeleteRecord(data))"
+												  Title="Delete">
+										</SfButton>
+									</div>
+								</Template>
+							</GridColumn>
+						</GridColumns>
 
 								<GridEvents TValue="IDictionary<string, object>" 
 										   OnRecordDoubleClick="OnRecordDoubleClick">
 								</GridEvents>
 							</SfGrid>
+
 				}
 				else
 				{
@@ -177,14 +220,17 @@
 </div>
 
 @code {
-
+	private bool showColumnSelector = false;
 	// Data properties
 	private List<LookupTableDto> availableTables = new();
 	private string selectedTableName = string.Empty;
 	private List<IDictionary<string, object>> gridData = new();
+
 	private List<GridColumnModel> gridColumns = new();
 	private int totalRecords = 0;
 	private bool isLoading = false;
+	private bool showAddColumnDialog;
+
 
 	// Grid configuration
 	private string[] pageSizes = { "10", "20", "50", "100" };
@@ -198,11 +244,15 @@
 		public ColumnType Type { get; set; } = ColumnType.String;
 		public string Format { get; set; }
 		public bool AllowEditing { get; set; } = true;
+		public bool IsVisible { get; set; } = true;
 	}
+
+
 
 	protected override async Task OnInitializedAsync()
 	{
 		await LoadAvailableTables();
+		
 	}
 
 	private async Task LoadAvailableTables()
@@ -359,6 +409,8 @@
 					$"Value {index}"
 		};
 	}
+
+//
 
 	private bool ShouldIncludeProperty(PropertyInfo prop)
 	{
