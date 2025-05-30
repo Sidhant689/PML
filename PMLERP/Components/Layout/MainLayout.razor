@@ -74,9 +74,16 @@
 <!-- Modern Layout with Enhanced Sidebar -->
 <div class="app-layout @(isDarkMode ? "dark-mode" : "")">
     <!-- Elegant Sidebar Navigation -->
-    <div class="@SidebarCssClass">
+<div class="@SidebarCssClass">
+    @if (NavigationManager.Uri.Contains("/user-login", StringComparison.OrdinalIgnoreCase))
+    {
+        <DynamicNavMenu IsCollapsed="@isCollapsed" />
+    }
+    else
+    {
         <NavMenu IsCollapsed="@isCollapsed" />
-    </div>
+    }
+</div>
 
     <!-- Backdrop for mobile -->
     @if (sidebarExpanded && isMobile)

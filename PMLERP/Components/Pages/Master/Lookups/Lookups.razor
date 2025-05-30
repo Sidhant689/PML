@@ -82,11 +82,11 @@
 					@GetSelectedTableDescription() Data
 					</h5>
 					<div class="card-actions">
-						<SfButton CssClass="e-info e-small"
+						@* <SfButton CssClass="e-info e-small"
 								  IconCss="bi bi-eye"
 								  OnClick="() => showColumnSelector = !showColumnSelector">
 							Columns
-						</SfButton>
+						</SfButton> *@
 						
 						
 						<SfButton CssClass="e-success e-small" IconCss="bi bi-plus-circle" OnClick="AddNewRecord">
@@ -95,7 +95,7 @@
 						<SfButton CssClass="e-info e-small" IconCss="bi bi-download" OnClick="ExportData">
 							Export
 						</SfButton>
-						@if (showColumnSelector)
+						@* @if (showColumnSelector)
 						{
 							<div class="column-selector-panel p-3 border rounded bg-white shadow-sm"
 								 style="position:absolute; z-index:1000;top:30px; width:220px;">
@@ -113,7 +113,7 @@
 									</div>
 								}
 							</div>
-						}
+						} *@
 
 					</div>
 				</div>
@@ -136,11 +136,12 @@
 								   AllowSelection="true"
 								   AllowResizing="true"
 								   AllowGrouping
+								   ShowColumnMenu
 								   Height="500"
 								   CssClass="lookup-grid">
 
 								<GridPageSettings PageSize="20" PageSizes="@pageSizes"></GridPageSettings>
-								<GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Excel"></GridFilterSettings>
+								@* <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Excel"></GridFilterSettings> *@
 								<GridSelectionSettings Type="Syncfusion.Blazor.Grids.SelectionType.Single"></GridSelectionSettings>
 
 						<GridColumns>
@@ -220,7 +221,7 @@
 </div>
 
 @code {
-	private bool showColumnSelector = false;
+	// private bool showColumnSelector = false;
 	// Data properties
 	private List<LookupTableDto> availableTables = new();
 	private string selectedTableName = string.Empty;

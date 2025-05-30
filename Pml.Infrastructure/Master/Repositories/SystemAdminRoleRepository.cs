@@ -44,9 +44,9 @@ namespace Pml.Infrastructure.Master.Repositories
                     await connection.OpenAsync();
 
                     // Define the SQL query to fetch role names for the given admin user
-                    var query = "SELECT rolename FROM systemadminrole r " +
-                                "JOIN systemadminuserrole ur ON ur.systemadminroleid = r.id " +
-                                "WHERE ur.systemadminuserid = @AdminId";
+                    var query = "SELECT rolename FROM vendorrole r " +
+                                "JOIN vendoruserrole ur ON ur.vendorroleid = r.id " +
+                                "WHERE ur.vendoruserid = @AdminId";
 
                     // Execute the query using Dapper and return the result as a list
                     var roles = await connection.QueryAsync<string>(query, new { AdminId = adminId });

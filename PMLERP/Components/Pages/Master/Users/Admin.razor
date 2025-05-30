@@ -1,7 +1,715 @@
 ﻿@page "/users/admin"
 
-<h3>admin</h3>
+@using Pml.Shared.DTOs.Master.SystemAdminDTOs
+@inject ISystemAdminUserService SystemAdminService
+@inject IToastService ToastService
+@inject IJSRuntime JSRuntime
+
+<PageTitle>System Admin Management</PageTitle>
+
+<!-- Page Header -->
+<div class="page-header">
+    <div class="header-content">
+        <div class="header-title">
+            <div class="header-icon">
+                <i class="bi bi-gear-wide-connected"></i>
+            </div>
+            <div>
+                <h1 class="page-title">System Admin Management</h1>
+                <p class="page-subtitle">Manage system administrators and their permissions</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <SfButton CssClass="e-primary" IconCss="bi bi-plus" @onclick="OpenAddModal">
+                Add New Admin
+            </SfButton>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Card -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="bi bi-shield-lock"></i>
+            Admin Users
+        </h3>
+        <div class="card-actions">
+            <SfTextBox Placeholder="Search admins..." 
+                      CssClass="search-input" 
+                      ShowClearButton="true"
+                      @bind-Value="@searchText"
+                      @oninput="OnSearchTextChanged">
+                <TextBoxEvents TValue="string" Input="OnSearchTextChanged" />
+            </SfTextBox>
+        </div>
+    </div>
+    <div class="card-body">
+        @if (isLoading)
+        {
+            <div class="loading-container">
+                <div class="loading-spinner"></div>
+                <p>Loading admin users...</p>
+            </div>
+        }
+        else if (adminUsers?.Any() == true)
+        {
+            <SfGrid DataSource="@filteredAdmins" 
+                   AllowPaging="true" 
+                   AllowSorting="true" 
+                   AllowFiltering="false"
+                   Height="500px"
+                   CssClass="custom-grid">
+                <GridPageSettings PageSize="10" PageSizes="true"></GridPageSettings>
+                <GridColumns>
+                    <GridColumn Field="@nameof(SystemAdminUserDto.Id)" 
+                               HeaderText="ID" 
+                               Width="80" 
+                               TextAlign="TextAlign.Center">
+                    </GridColumn>
+                    <GridColumn Field="@nameof(SystemAdminUserDto.Name)" 
+                               HeaderText="Full Name" 
+                               Width="200">
+                        <Template>
+                            @{
+                                var admin = (context as SystemAdminUserDto);
+                            }
+                            <div class="user-cell">
+                                <div class="user-avatar">
+                                    <i class="bi bi-person"></i>
+                                </div>
+                                <div class="user-info">
+                                    <div class="user-name">@admin.Name</div>
+                                    <div class="user-username">@admin.UserName</div>
+                                </div>
+                            </div>
+                        </Template>
+                    </GridColumn>
+                    <GridColumn Field="@nameof(SystemAdminUserDto.UserEmail)" 
+                               HeaderText="Email" 
+                               Width="250">
+                        <Template>
+                            @{
+                                var admin = (context as SystemAdminUserDto);
+                            }
+                            <div class="contact-cell">
+                                <i class="bi bi-envelope"></i>
+                                @admin.UserEmail
+                            </div>
+                        </Template>
+                    </GridColumn>
+                    <GridColumn Field="@nameof(SystemAdminUserDto.UserPhone)" 
+                               HeaderText="Phone" 
+                               Width="150">
+                        <Template>
+                            @{
+                                var admin = (context as SystemAdminUserDto);
+                            }
+                            <div class="contact-cell">
+                                <i class="bi bi-telephone"></i>
+                                @admin.UserPhone
+                            </div>
+                        </Template>
+                    </GridColumn>
+                    <GridColumn Field="@nameof(SystemAdminUserDto.UserStatus)" 
+                               HeaderText="Status" 
+                               Width="120" 
+                               TextAlign="TextAlign.Center">
+                        <Template>
+                            @{
+                                var admin = (context as SystemAdminUserDto);
+                                var statusClass = admin.UserStatus?.ToLower() == "active" ? "status-active" : "status-inactive";
+                            }
+                            <span class="status-badge @statusClass">@admin.UserStatus</span>
+                        </Template>
+                    </GridColumn>
+                    <GridColumn HeaderText="Actions" 
+                               Width="150" 
+                               TextAlign="TextAlign.Center">
+                        <Template>
+                            @{
+                                var admin = (context as SystemAdminUserDto);
+                            }
+                            <div class="action-buttons">
+                                <SfButton CssClass="e-small e-round e-primary" 
+                                         IconCss="bi bi-pencil-square" 
+                                         @onclick="() => OpenEditModal(admin)"
+                                         Title="Edit">
+                                </SfButton>
+                                <SfButton CssClass="e-small e-round e-danger" 
+                                         IconCss="bi bi-trash" 
+                                         @onclick="() => ConfirmDelete(admin)"
+                                         Title="Delete">
+                                </SfButton>
+                            </div>
+                        </Template>
+                    </GridColumn>
+                </GridColumns>
+            </SfGrid>
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="bi bi-people-x"></i>
+                </div>
+                <h3>No Admin Users Found</h3>
+                <p>Get started by adding your first system administrator.</p>
+                <SfButton CssClass="e-primary" IconCss="bi bi-plus" @onclick="OpenAddModal">
+                    Add First Admin
+                </SfButton>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<SfDialog @bind-Visible="@showModal" 
+          Header="@modalTitle" 
+          Width="600px" 
+          ShowCloseIcon="true" 
+          IsModal="true"
+          CssClass="custom-dialog">
+    <DialogTemplates>
+        <Content>
+            <EditForm Model="@currentAdmin" OnValidSubmit="SaveAdmin">
+                <DataAnnotationsValidator />
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Full Name *</label>
+                        <SfTextBox @bind-Value="@currentAdmin.Name" 
+                                  Placeholder="Enter full name"
+                                  CssClass="form-control-custom">
+                        </SfTextBox>
+                        <ValidationMessage For="@(() => currentAdmin.Name)" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Username *</label>
+                        <SfTextBox @bind-Value="@currentAdmin.UserName" 
+                                  Placeholder="Enter username"
+                                  CssClass="form-control-custom">
+                        </SfTextBox>
+                        <ValidationMessage For="@(() => currentAdmin.UserName)" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Password *</label>
+                        <div class="password-input-container">
+                            <SfTextBox @bind-Value="@currentAdmin.Password" 
+                                      Type="@(showPassword ? InputType.Text : InputType.Password)"
+                                      Placeholder="Enter password"
+                                      CssClass="form-control-custom password-field">
+                            </SfTextBox>
+                            <SfButton CssClass="password-toggle" 
+                                     IconCss="@(showPassword ? "bi bi-eye-slash" : "bi bi-eye")"
+                                     @onclick="TogglePasswordVisibility">
+                            </SfButton>
+                        </div>
+                        <ValidationMessage For="@(() => currentAdmin.Password)" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Email *</label>
+                        <SfTextBox @bind-Value="@currentAdmin.UserEmail" 
+                                  Type="InputType.Email"
+                                  Placeholder="Enter email address"
+                                  CssClass="form-control-custom">
+                        </SfTextBox>
+                        <ValidationMessage For="@(() => currentAdmin.UserEmail)" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Phone</label>
+                        <SfTextBox @bind-Value="@currentAdmin.UserPhone" 
+                                  Placeholder="Enter phone number"
+                                  CssClass="form-control-custom">
+                        </SfTextBox>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <SfDropDownList TValue="string" 
+                                       TItem="string" 
+                                       @bind-Value="@currentAdmin.UserStatus"
+                                       DataSource="@statusOptions"
+                                       CssClass="form-control-custom">
+                        </SfDropDownList>
+                    </div>
+
+                    <div class="form-group form-group-full">
+                        <label class="form-label">Address</label>
+                        <SfTextBox @bind-Value="@currentAdmin.UserAddress" 
+                                  Multiline="true" 
+                                  RowCount="3"
+                                  Placeholder="Enter full address"
+                                  CssClass="form-control-custom">
+                        </SfTextBox>
+                    </div>
+                </div>
+            </EditForm>
+        </Content>
+    </DialogTemplates>
+    <DialogButtons>
+        <DialogButton Content="Cancel" 
+                     CssClass="e-flat e-secondary" 
+                     OnClick="CloseModal" />
+        <DialogButton Content="@(isEditing ? "Update" : "Create")" 
+                     CssClass="e-primary" 
+                     OnClick="SaveAdmin" 
+                     Disabled="@isSaving" />
+    </DialogButtons>
+</SfDialog>
+
+<!-- Delete Confirmation Dialog -->
+<SfDialog @bind-Visible="@showDeleteDialog" 
+          Header="Confirm Delete" 
+          Width="400px" 
+          IsModal="true"
+          CssClass="delete-dialog">
+    <DialogTemplates>
+        <Content>
+            <div class="delete-content">
+                <div class="delete-icon">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <p>Are you sure you want to delete <strong>@adminToDelete?.Name</strong>?</p>
+                <p class="text-muted">This action cannot be undone.</p>
+            </div>
+        </Content>
+    </DialogTemplates>
+    <DialogButtons>
+        <DialogButton Content="Cancel" 
+                     CssClass="e-flat e-secondary" 
+                     OnClick="CancelDelete" />
+        <DialogButton Content="Delete" 
+                     CssClass="e-danger" 
+                     OnClick="DeleteAdmin" />
+    </DialogButtons>
+</SfDialog>
+
+<style>
+/* Custom Grid Styling */
+.custom-grid {
+    border: none;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.custom-grid .e-gridheader {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(59, 130, 246, 0.05) 100%);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.custom-grid .e-headercell {
+    font-weight: 600;
+    color: var(--text-primary);
+    border-right: 1px solid var(--border-color);
+}
+
+.custom-grid .e-row {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.custom-grid .e-row:hover {
+    background-color: rgba(59, 130, 246, 0.05);
+}
+
+/* User Cell Styling */
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.875rem;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.user-username {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+}
+
+/* Contact Cell Styling */
+.contact-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-primary);
+}
+
+.contact-cell i {
+    color: var(--primary-color);
+    width: 16px;
+}
+
+/* Status Badge Styling */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.status-active {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-inactive {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--error-color);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* Form Styling */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group-full {
+    grid-column: 1 / -1;
+}
+
+.password-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-field {
+    flex: 1;
+    padding-right: 3rem !important;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 0.5rem;
+    background: none !important;
+    border: none !important;
+    color: var(--text-secondary) !important;
+    z-index: 10;
+}
+
+.password-toggle:hover {
+    color: var(--primary-color) !important;
+}
+
+/* Search Input Styling */
+.search-input {
+    min-width: 250px;
+}
+
+/* Delete Dialog Styling */
+.delete-content {
+    text-align: center;
+    padding: 1rem;
+}
+
+.delete-icon {
+    font-size: 3rem;
+    color: var(--warning-color);
+    margin-bottom: 1rem;
+}
+
+.delete-content p {
+    margin-bottom: 0.5rem;
+}
+
+/* Custom Dialog Styling */
+.custom-dialog .e-dialog {
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+}
+
+.custom-dialog .e-dlg-header {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(59, 130, 246, 0.05) 100%);
+    border-bottom: 1px solid var(--border-color);
+    font-family: var(--heading-font);
+    font-weight: 600;
+}
+
+
+/* Responsive Design */
+@@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .search-input {
+        min-width: 200px;
+    }
+    
+    .custom-grid {
+        font-size: 0.875rem;
+    }
+    
+    .user-cell {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}
+
+/* Dark Mode Support */
+.dark-mode .custom-grid .e-gridheader {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(59, 130, 246, 0.1) 100%);
+}
+
+.dark-mode .custom-grid .e-row:hover {
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+.dark-mode .status-active {
+    background-color: rgba(16, 185, 129, 0.2);
+}
+
+.dark-mode .status-inactive {
+    background-color: rgba(239, 68, 68, 0.2);
+}
+</style>
 
 @code {
+    private List<SystemAdminUserDto> adminUsers = new();
+    private List<SystemAdminUserDto> filteredAdmins = new();
+    private SystemAdminUserDto currentAdmin = new();
+    private SystemAdminUserDto adminToDelete;
+    
+    private bool isLoading = false;
+    private bool showModal = false;
+    private bool showDeleteDialog = false;
+    private bool isEditing = false;
+    private bool isSaving = false;
+    private bool showPassword = false;
+    private string searchText = "";
+    private string modalTitle => isEditing ? "Edit Admin User" : "Add New Admin User";
+    
+    private List<string> statusOptions = new() { "Active", "Inactive" };
 
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAdminUsers();
+    }
+
+    private async Task LoadAdminUsers()
+    {
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+            
+            adminUsers = await SystemAdminService.GetAllAdminsAsync() ?? new List<SystemAdminUserDto>();
+            filteredAdmins = adminUsers.ToList();
+        }
+        catch (Exception ex)
+        {
+			await ToastService.ShowErrorAsync("Failed to load admin users. Please try again later.", ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void OnSearchTextChanged(ChangeEventArgs e)
+    {
+        searchText = e.Value?.ToString() ?? "";
+        FilterAdmins();
+    }
+
+    private void FilterAdmins()
+    {
+        if (string.IsNullOrWhiteSpace(searchText))
+        {
+            filteredAdmins = adminUsers.ToList();
+        }
+        else
+        {
+            var search = searchText.ToLower();
+            filteredAdmins = adminUsers.Where(a => 
+                a.Name?.ToLower().Contains(search) == true ||
+                a.UserName?.ToLower().Contains(search) == true ||
+                a.UserEmail?.ToLower().Contains(search) == true ||
+                a.UserPhone?.ToLower().Contains(search) == true
+            ).ToList();
+        }
+        StateHasChanged();
+    }
+
+    private void OpenAddModal()
+    {
+        currentAdmin = new SystemAdminUserDto { UserStatus = "Active" };
+        isEditing = false;
+        showModal = true;
+        StateHasChanged();
+    }
+
+    private void OpenEditModal(SystemAdminUserDto admin)
+    {
+        currentAdmin = new SystemAdminUserDto
+        {
+            Id = admin.Id,
+            Name = admin.Name,
+            UserName = admin.UserName,
+            Password = "", // Don't populate password for security
+            UserStatus = admin.UserStatus,
+            UserEmail = admin.UserEmail,
+            UserPhone = admin.UserPhone,
+            UserAddress = admin.UserAddress
+        };
+        isEditing = true;
+        showModal = true;
+        StateHasChanged();
+    }
+
+    private void CloseModal()
+    {
+        showModal = false;
+        currentAdmin = new SystemAdminUserDto();
+        showPassword = false;
+        StateHasChanged();
+    }
+
+    private void TogglePasswordVisibility()
+    {
+        showPassword = !showPassword;
+        StateHasChanged();
+    }
+
+    private async Task SaveAdmin()
+    {
+        try
+        {
+            // Basic validation
+            if (string.IsNullOrWhiteSpace(currentAdmin.Name) ||
+                string.IsNullOrWhiteSpace(currentAdmin.UserName) ||
+                string.IsNullOrWhiteSpace(currentAdmin.UserEmail))
+            {
+				await ToastService.ShowWarningAsync("Warning","Please fill in all required fields.");
+                return;
+            }
+
+            if (!isEditing && string.IsNullOrWhiteSpace(currentAdmin.Password))
+            {
+				await ToastService.ShowWarningAsync("Warning","Password is required for new admin users.");
+                return;
+            }
+
+            isSaving = true;
+            StateHasChanged();
+
+            SystemAdminUserDto result;
+            
+            if (isEditing)
+            {
+                // For edit, only update password if it's provided
+                if (string.IsNullOrWhiteSpace(currentAdmin.Password))
+                {
+                    // Get existing admin and preserve password
+                    var existing = adminUsers.FirstOrDefault(a => a.Id == currentAdmin.Id);
+                    if (existing != null)
+                    {
+                        currentAdmin.Password = existing.Password;
+                    }
+                }
+                result = await SystemAdminService.UpdateAdminAsync(currentAdmin);
+				await ToastService.ShowSuccessAsync("Success", $"Admin user '{result.Name}' updated successfully!");
+            }
+            else
+            {
+                result = await SystemAdminService.CreateAdminAsync(currentAdmin);
+				await ToastService.ShowSuccessAsync("Success", $"Admin user '{result.Name}' created successfully!");
+            }
+
+            CloseModal();
+            await LoadAdminUsers();
+        }
+        catch (Exception ex)
+        {
+			await ToastService.ShowErrorAsync("Error", "Failed to save admin user. Please try again later.");
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ConfirmDelete(SystemAdminUserDto admin)
+    {
+        adminToDelete = admin;
+        showDeleteDialog = true;
+        StateHasChanged();
+    }
+
+    private void CancelDelete()
+    {
+        adminToDelete = null;
+        showDeleteDialog = false;
+        StateHasChanged();
+    }
+
+    private async Task DeleteAdmin()
+    {
+        try
+        {
+            if (adminToDelete == null) return;
+
+            var success = await SystemAdminService.DeleteAdminAsync(adminToDelete.Id);
+            
+            if (success)
+            {
+				await ToastService.ShowSuccessAsync("Success", $"Admin user '{adminToDelete.Name}' deleted successfully!");
+                await LoadAdminUsers();
+            }
+            else
+            {
+				await ToastService.ShowErrorAsync("Error", "Failed to delete admin user. Please try again later.");
+            }
+        }
+        catch (Exception ex)
+        {
+			await ToastService.ShowErrorAsync("Error", "An error occurred while deleting the admin user. Please try again later.");
+        }
+        finally
+        {
+            CancelDelete();
+        }
+    }
 }
