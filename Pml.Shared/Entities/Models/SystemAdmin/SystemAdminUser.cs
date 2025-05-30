@@ -28,9 +28,9 @@ namespace Pml.Shared.Entities.Models.Master
     {
         public int Id { get; set; }
         [ForeignKey("SystemAdminUser")]
-        public int SystemAdminUserId { get; set; }
+        public int VendorUserId { get; set; }
         [ForeignKey("SystemAdminRole")]
-        public int SystemAdminRoleId { get; set; }
+        public int VendorRoleId { get; set; }
         public virtual SystemAdminUser SystemAdminUser { get; set; }
         public virtual SystemAdminRole SystemAdminRole { get; set; }
     }

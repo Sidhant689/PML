@@ -1,0 +1,955 @@
+﻿@page "/master/advanceddropdown"
+
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Buttons
+
+<div class="advanced-dropdown-page">
+    <div class="page-header">
+        <h1 class="page-title">Advanced Dropdown Selection</h1>
+        <p class="page-subtitle">Searchable dropdown with grid view and add new functionality using Syncfusion</p>
+    </div>
+
+    <!-- Customer/Item Selection -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="section-title">
+                <i class="icon">👥</i>
+                Customer Selection
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="form-group">
+                <label class="form-label">Customer Posting:</label>
+
+                <SfComboBox @ref="CustomerComboBox"
+                            TValue="string"
+                            TItem="DropdownItem"
+                            DataSource="@allItems"
+                            @bind-Value="@selectedCustomerId"
+                            ValueField="Code"
+                            TextField="Code"
+                            Placeholder="Search customers or add new..."
+                            AllowFiltering="true"
+                            AllowCustom="true"
+                            ShowClearButton="true"
+                            PopupHeight="300px"
+                            FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+
+                    <ComboBoxTemplates TItem="DropdownItem">
+                        <ItemTemplate>
+                            <div class="dropdown-item-template">
+                                <div class="item-main">
+                                    <span class="item-code">@context.Code</span>
+                                    <span class="item-description">@context.Description</span>
+                                </div>
+                                <div class="item-details">
+                                    <span class="item-unit">@context.Unit</span>
+                                    <span class="item-price">@context.UnitPrice.ToString("C")</span>
+                                    <span class="item-location">@context.Location</span>
+                                </div>
+                            </div>
+                        </ItemTemplate>
+
+                        <FooterTemplate>
+                            <div class="dropdown-footer">
+                                <SfButton @onclick="ShowCustomerGrid"
+                                          CssClass="e-primary e-small">
+                                    Select from full list
+                                </SfButton>
+                            </div>
+                        </FooterTemplate>
+                    </ComboBoxTemplates>
+
+                    <ComboBoxEvents TValue="string"
+                                    TItem="DropdownItem"
+                                    ValueChange="OnCustomerValueChange"
+                                    CustomValueSpecifier="OnCustomerCustomValue">
+                    </ComboBoxEvents>
+                </SfComboBox>
+            </div>
+
+            @if (selectedCustomer != null)
+            {
+                <div class="selected-item-display">
+                    <div class="selected-item-card">
+                        <div class="selected-item-header">
+                            <span class="selected-code">@selectedCustomer.Code</span>
+                            <span class="selected-type">@selectedCustomer.Type</span>
+                            <span class="selected-price">@selectedCustomer.UnitPrice.ToString("C")</span>
+                        </div>
+                        <div class="selected-description">@selectedCustomer.Description</div>
+                        <div class="selected-details">
+                            <span class="selected-unit">Unit: @selectedCustomer.Unit</span>
+                            <span class="selected-location">Location: @selectedCustomer.Location</span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Product/Item Selection -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="section-title">
+                <i class="icon">📦</i>
+                Product Selection
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="form-group">
+                <label class="form-label">Product Item:</label>
+
+                <SfComboBox @ref="ProductComboBox"
+                            TValue="string"
+                            TItem="DropdownItem"
+                            DataSource="@allProducts"
+                            @bind-Value="@selectedProductId"
+                            ValueField="Code"
+                            TextField="Code"
+                            Placeholder="Search products..."
+                            AllowFiltering="true"
+                            AllowCustom="true"
+                            ShowClearButton="true"
+                            PopupHeight="300px"
+                            FilterType="Syncfusion.Blazor.DropDowns.FilterType.Contains">
+
+                    <ComboBoxTemplates TItem="DropdownItem">
+                        <ItemTemplate>
+                            <div class="dropdown-item-template">
+                                <div class="item-main">
+                                    <span class="item-code">@context.Code</span>
+                                    <span class="item-description">@context.Description</span>
+                                </div>
+                                <div class="item-details">
+                                    <span class="item-unit">@context.Unit</span>
+                                    <span class="item-price">@context.UnitPrice.ToString("C")</span>
+                                    <span class="item-location">@context.Location</span>
+                                </div>
+                            </div>
+                        </ItemTemplate>
+
+                        <FooterTemplate>
+                            <div class="dropdown-footer">
+                                <SfButton @onclick="ShowProductGrid"
+                                          CssClass="e-primary e-small">
+                                    Select from full list
+                                </SfButton>
+                            </div>
+                        </FooterTemplate>
+                    </ComboBoxTemplates>
+
+                    <ComboBoxEvents TValue="string"
+                                    TItem="DropdownItem"
+                                    ValueChange="OnProductValueChange"
+                                    CustomValueSpecifier="OnProductCustomValue">
+                    </ComboBoxEvents>
+                </SfComboBox>
+            </div>
+
+            @if (selectedProduct != null)
+            {
+                <div class="selected-item-display">
+                    <div class="selected-item-card">
+                        <div class="selected-item-header">
+                            <span class="selected-code">@selectedProduct.Code</span>
+                            <span class="selected-type">@selectedProduct.Type</span>
+                            <span class="selected-price">@selectedProduct.UnitPrice.ToString("C")</span>
+                        </div>
+                        <div class="selected-description">@selectedProduct.Description</div>
+                        <div class="selected-details">
+                            <span class="selected-unit">Unit: @selectedProduct.Unit</span>
+                            <span class="selected-location">Location: @selectedProduct.Location</span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Customer Grid Dialog -->
+    <SfDialog @ref="CustomerGridDialog"
+              Width="90%"
+              Height="80%"
+              IsModal="true"
+              ShowCloseIcon="true"
+              @bind-Visible="showCustomerGrid">
+        <DialogTemplates>
+            <Header>Select Customer</Header>
+            <Content>
+                <SfGrid @ref="CustomerGrid"
+                        DataSource="@allItems"
+                        AllowPaging="true"
+                        AllowSorting="true"
+                        AllowFiltering="true"
+                        Height="400px">
+
+                    <GridPageSettings PageSize="20"></GridPageSettings>
+                    <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Menu"></GridFilterSettings>
+
+                    <GridColumns>
+                        <GridColumn Field="Code" HeaderText="Code" Width="120" Type="ColumnType.String"></GridColumn>
+                        <GridColumn Field="Description" HeaderText="Description" Width="250" Type="ColumnType.String"></GridColumn>
+                        <GridColumn Field="Unit" HeaderText="Base Unit of Measure" Width="150" Type="ColumnType.String"></GridColumn>
+                        <GridColumn Field="UnitPrice" HeaderText="Unit Price" Width="120" Format="C2" Type="ColumnType.Number"></GridColumn>
+                        <GridColumn Field="Location" HeaderText="Search Description" Width="150" Type="ColumnType.String"></GridColumn>
+                        <GridColumn HeaderText="Action" Width="100">
+                            <Template>
+                                @{
+                                    var item = (context as DropdownItem);
+                                }
+                                <SfButton @onclick="() => SelectCustomerFromGrid(item)"
+                                          CssClass="e-primary e-small">
+                                    Select
+                                </SfButton>
+                            </Template>
+                        </GridColumn>
+                    </GridColumns>
+                </SfGrid>
+            </Content>
+        </DialogTemplates>
+        <DialogButtons>
+            <DialogButton Content="Cancel" OnClick="CloseCustomerGrid" />
+        </DialogButtons>
+    </SfDialog>
+
+    <!-- Product Grid Dialog -->
+    <SfDialog @ref="ProductGridDialog"
+              Width="90%"
+              Height="80%"
+              IsModal="true"
+              ShowCloseIcon="true"
+              @bind-Visible="showProductGrid">
+        <DialogTemplates>
+            <Header>Select Product</Header>
+            <Content>
+                <SfGrid @ref="ProductGrid"
+                        DataSource="@allProducts"
+                        AllowPaging="true"
+                        AllowSorting="true"
+                        AllowFiltering="true"
+                        Height="400px">
+
+                    <GridPageSettings PageSize="20"></GridPageSettings>
+                    <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Menu"></GridFilterSettings>
+
+                    <GridColumns>
+                        <GridColumn Field="Code" HeaderText="Code" Width="120" Type="ColumnType.String"></GridColumn>
+                        <GridColumn Field="Description" HeaderText="Description" Width="250" Type="ColumnType.String"></GridColumn>
+                        <GridColumn Field="Unit" HeaderText="Base Unit of Measure" Width="150" Type="ColumnType.String"></GridColumn>
+                        <GridColumn Field="UnitPrice" HeaderText="Unit Price" Width="120" Format="C2" Type="ColumnType.Number"></GridColumn>
+                        <GridColumn Field="Location" HeaderText="Search Description" Width="150" Type="ColumnType.String"></GridColumn>
+                        <GridColumn HeaderText="Action" Width="100">
+                            <Template>
+                                @{
+                                    var product = (context as DropdownItem);
+                                }
+                                <SfButton @onclick="() => SelectProductFromGrid(product)"
+                                          CssClass="e-primary e-small">
+                                    Select
+                                </SfButton>
+                            </Template>
+                        </GridColumn>
+                    </GridColumns>
+                </SfGrid>
+            </Content>
+        </DialogTemplates>
+        <DialogButtons>
+            <DialogButton Content="Cancel" OnClick="CloseProductGrid" />
+        </DialogButtons>
+    </SfDialog>
+</div>
+
+@code {
+    // Syncfusion component references
+    private SfComboBox<string, DropdownItem>? CustomerComboBox;
+    private SfComboBox<string, DropdownItem>? ProductComboBox;
+    private SfDialog? CustomerGridDialog;
+    private SfDialog? ProductGridDialog;
+    private SfGrid<DropdownItem>? CustomerGrid;
+    private SfGrid<DropdownItem>? ProductGrid;
+
+    // State variables
+    private bool showCustomerGrid = false;
+    private bool showProductGrid = false;
+    private string selectedCustomerId = "";
+    private string selectedProductId = "";
+
+    // Selected items
+    private DropdownItem? selectedCustomer = null;
+    private DropdownItem? selectedProduct = null;
+
+    // Sample data
+    private List<DropdownItem> allItems = new();
+    private List<DropdownItem> allProducts = new();
+
+    protected override void OnInitialized()
+    {
+        InitializeSampleData();
+        InitializeProductData();
+    }
+
+    private void InitializeSampleData()
+    {
+        allItems = new List<DropdownItem>
+        {
+            new DropdownItem { Code = "DOMESTIC", Description = "Domestic customers and vendors", Type = "Customer", Unit = "EA", UnitPrice = 0.00m, Location = "General" },
+            new DropdownItem { Code = "EU", Description = "Customers and vendors in EU", Type = "Customer", Unit = "EA", UnitPrice = 0.00m, Location = "Europe" },
+            new DropdownItem { Code = "EXPORT", Description = "Other customers and vendors (not EU)", Type = "Customer", Unit = "EA", UnitPrice = 0.00m, Location = "International" },
+            new DropdownItem { Code = "INTERCOMP", Description = "Intercompany", Type = "Customer", Unit = "EA", UnitPrice = 0.00m, Location = "Internal" },
+            new DropdownItem { Code = "CUST001", Description = "ABC Corporation", Type = "Customer", Unit = "EA", UnitPrice = 0.00m, Location = "New York" },
+            new DropdownItem { Code = "CUST002", Description = "XYZ Industries", Type = "Customer", Unit = "EA", UnitPrice = 0.00m, Location = "California" },
+            new DropdownItem { Code = "CUST003", Description = "Global Solutions Ltd", Type = "Customer", Unit = "EA", UnitPrice = 0.00m, Location = "London" },
+            new DropdownItem { Code = "CUST004", Description = "Tech Innovators Inc", Type = "Customer", Unit = "EA", UnitPrice = 0.00m, Location = "Seattle" },
+            new DropdownItem { Code = "CUST005", Description = "Premier Manufacturing", Type = "Customer", Unit = "EA", UnitPrice = 0.00m, Location = "Chicago" },
+        };
+    }
+
+    private void InitializeProductData()
+    {
+        allProducts = new List<DropdownItem>
+        {
+            new DropdownItem { Code = "70008", Description = "Guest Chair, black", Type = "Product", Unit = "PCS", UnitPrice = 125.10m, Location = "Warehouse A" },
+            new DropdownItem { Code = "ANTWERP", Description = "Conference Table", Type = "Product", Unit = "PCS", UnitPrice = 420.40m, Location = "ANTWERP" },
+            new DropdownItem { Code = "BERLIN", Description = "Guest Chair, yellow", Type = "Product", Unit = "PCS", UnitPrice = 125.10m, Location = "BERLIN" },
+            new DropdownItem { Code = "ROME", Description = "Guest Chair, green", Type = "Product", Unit = "PCS", UnitPrice = 125.10m, Location = "ROME" },
+            new DropdownItem { Code = "TOKYO", Description = "Guest Chair, blue", Type = "Product", Unit = "PCS", UnitPrice = 125.10m, Location = "TOKYO" },
+            new DropdownItem { Code = "PARIS", Description = "Executive Desk", Type = "Product", Unit = "PCS", UnitPrice = 850.75m, Location = "PARIS" },
+            new DropdownItem { Code = "LONDON", Description = "Office Cabinet", Type = "Product", Unit = "PCS", UnitPrice = 320.50m, Location = "LONDON" },
+            new DropdownItem { Code = "MADRID", Description = "Meeting Table", Type = "Product", Unit = "PCS", UnitPrice = 675.25m, Location = "MADRID" },
+            new DropdownItem { Code = "MILAN", Description = "Ergonomic Chair", Type = "Product", Unit = "PCS", UnitPrice = 445.80m, Location = "MILAN" },
+            new DropdownItem { Code = "VIENNA", Description = "Storage Unit", Type = "Product", Unit = "PCS", UnitPrice = 285.90m, Location = "VIENNA" },
+        };
+    }
+
+    // Customer events
+    private void OnCustomerValueChange(ChangeEventArgs<string, DropdownItem> args)
+    {
+        selectedCustomer = allItems.FirstOrDefault(x => x.Code == args.Value);
+        StateHasChanged();
+    }
+
+    private void OnCustomerCustomValue(CustomValueSpecifierEventArgs<DropdownItem> args)
+    {
+        var newCustomer = new DropdownItem
+            {
+                Code = args.Text,
+                Description = $"New customer: {args.Text}",
+                Type = "Customer",
+                Unit = "EA",
+                UnitPrice = 0.00m,
+                Location = "To be defined"
+            };
+
+        allItems.Add(newCustomer);
+        selectedCustomer = newCustomer;
+        args.Item = newCustomer;
+    }
+
+    // Product events
+    private void OnProductValueChange(ChangeEventArgs<string, DropdownItem> args)
+    {
+        selectedProduct = allProducts.FirstOrDefault(x => x.Code == args.Value);
+        StateHasChanged();
+    }
+
+    private void OnProductCustomValue(CustomValueSpecifierEventArgs<DropdownItem> args)
+    {
+        var newProduct = new DropdownItem
+            {
+                Code = args.Text,
+                Description = $"New product: {args.Text}",
+                Type = "Product",
+                Unit = "PCS",
+                UnitPrice = 0.00m,
+                Location = "To be assigned"
+            };
+
+        allProducts.Add(newProduct);
+        selectedProduct = newProduct;
+        args.Item = newProduct;
+    }
+
+    // Grid methods
+    private void ShowCustomerGrid()
+    {
+        showCustomerGrid = true;
+    }
+
+    private void CloseCustomerGrid()
+    {
+        showCustomerGrid = false;
+    }
+
+    private void SelectCustomerFromGrid(DropdownItem item)
+    {
+        selectedCustomer = item;
+        selectedCustomerId = item.Code;
+        showCustomerGrid = false;
+        StateHasChanged();
+    }
+
+    private void ShowProductGrid()
+    {
+        showProductGrid = true;
+    }
+
+    private void CloseProductGrid()
+    {
+        showProductGrid = false;
+    }
+
+    private void SelectProductFromGrid(DropdownItem product)
+    {
+        selectedProduct = product;
+        selectedProductId = product.Code;
+        showProductGrid = false;
+        StateHasChanged();
+    }
+
+    // DropdownItem class definition
+    public class DropdownItem
+    {
+        public string Code { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string Type { get; set; } = "";
+        public string Unit { get; set; } = "";
+        public decimal UnitPrice { get; set; }
+        public string Location { get; set; } = "";
+    }
+}
+
+<style>
+
+.advanced-dropdown-page {
+    font-family: var(--body-font);
+    color: var(--text-primary);
+    background: var(--bg-primary);
+    min-height: 100vh;
+    padding: 2rem;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.page-title {
+    font-family: var(--heading-font);
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.page-subtitle {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    font-weight: 400;
+}
+
+.elegant-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.elegant-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+}
+
+.card-header {
+    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-primary));
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.section-title {
+    font-family: var(--heading-font);
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.icon {
+    font-size: 1.2rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+/* Advanced Dropdown Styles */
+.advanced-dropdown {
+    position: relative;
+    width: 100%;
+}
+
+.dropdown-input-container {
+    display: flex;
+    align-items: center;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--bg-secondary);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.dropdown-input-container:focus-within,
+.dropdown-input-container:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.dropdown-search-input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 1rem;
+    outline: none;
+    font-family: var(--body-font);
+}
+
+.dropdown-toggle-btn {
+    background: none;
+    border: none;
+    padding: 0.75rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: color 0.3s ease;
+}
+
+.dropdown-toggle-btn:hover {
+    color: var(--primary-color);
+}
+
+.dropdown-arrow {
+    transition: transform 0.3s ease;
+    font-size: 0.8rem;
+}
+
+.dropdown-arrow.open {
+    transform: rotate(180deg);
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    z-index: 1000;
+    max-height: 400px;
+    overflow: hidden;
+}
+
+.dropdown-header {
+    padding: 0.75rem 1rem;
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dropdown-title {
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.add-new-btn {
+    background: linear-gradient(135deg, var(--success-color), var(--secondary-color));
+    color: var(--text-light);
+    border: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: 1rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.add-new-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.dropdown-items {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.dropdown-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.2s ease;
+}
+
+.dropdown-item:hover {
+    background: var(--bg-primary);
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.item-main {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.item-code {
+    font-weight: 600;
+    color: var(--primary-color);
+    min-width: 80px;
+}
+
+.item-description {
+    color: var(--text-primary);
+    flex: 1;
+}
+
+.item-details {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.item-unit, .item-price, .item-location {
+    min-width: 60px;
+}
+
+.dropdown-more, .dropdown-no-results {
+    padding: 0.75rem 1rem;
+    text-align: center;
+    color: var(--text-secondary);
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+.dropdown-footer {
+    padding: 0.75rem 1rem;
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border-color);
+}
+
+.show-all-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--secondary-color), var(--accent-color));
+    color: var(--text-light);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 500;
+}
+
+.show-all-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Selected Item Display */
+.selected-item-display {
+    margin-top: 1rem;
+}
+
+.selected-item-card {
+    background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.selected-item-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.selected-code {
+    font-weight: 600;
+    color: var(--primary-color);
+    font-size: 1.1rem;
+}
+
+.selected-type {
+    background: var(--secondary-color);
+    color: var(--text-light);
+    padding: 0.2rem 0.5rem;
+    border-radius: 1rem;
+    font-size: 0.8rem;
+}
+
+.selected-price {
+    font-weight: 600;
+    color: var(--success-color);
+    margin-left: auto;
+}
+
+.selected-description {
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.selected-details {
+    display: flex;
+    gap: 1rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Grid Modal Styles */
+.grid-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.grid-modal {
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    width: 90%;
+    max-width: 1200px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.grid-header {
+    padding: 1.5rem;
+    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-primary));
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.grid-header h3 {
+    font-family: var(--heading-font);
+    color: var(--text-primary);
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.grid-search {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.grid-search-input {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    width: 250px;
+}
+
+.close-grid-btn {
+    background: var(--error-color);
+    color: white;
+    border: none;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.close-grid-btn:hover {
+    transform: scale(1.1);
+}
+
+.grid-table-container {
+    flex: 1;
+    overflow: auto;
+    background: var(--bg-secondary);
+}
+
+.grid-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.grid-table th {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.grid-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.grid-row {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.grid-row:hover {
+    background: var(--bg-primary);
+}
+
+.code-col {
+    font-weight: 600;
+    color: var(--primary-color);
+    min-width: 100px;
+}
+
+.desc-col {
+    min-width: 250px;
+}
+
+.unit-col {
+    min-width: 80px;
+}
+
+.price-col {
+    text-align: right;
+    font-weight: 500;
+    min-width: 80px;
+}
+
+.location-col {
+    color: var(--text-secondary);
+    min-width: 120px;
+}
+
+.grid-footer {
+    padding: 1rem 1.5rem;
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.grid-count {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    font-family: var(--body-font);
+}
+
+.btn-secondary {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+    background: var(--border-color);
+}
+
+/* Responsive Design */
+@@media (max-width: 768px) {
+    .advanced-dropdown-page {
+        padding: 1rem;
+    }
+    
+    .page-title {
+        font-size: 2rem;
+    }
+    
+    .grid-modal {
+        width: 95%;
+        max-height: 90vh;
+    }
+    
+    .grid-search {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .grid-search-input {
+        width: 200px;
+    }
+    
+    .item-details {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+}
+</style>

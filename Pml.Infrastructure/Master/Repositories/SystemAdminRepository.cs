@@ -41,7 +41,7 @@ namespace Pml.Infrastructure.Master.Repositories
                 using (var connection = new SqlConnection(_connection.ConnectionString))
                 {
                     connection.Open();
-                    var query = "INSERT INTO systemadminuser (Username, Email, PasswordHash, RefreshToken, RefreshTokenExpiry, IsSuperAdmin) " +
+                    var query = "INSERT INTO vendoruser (Username, Email, PasswordHash, RefreshToken, RefreshTokenExpiry, IsSuperAdmin) " +
                                 "VALUES (@Username, @Email, @PasswordHash, @RefreshToken, @RefreshTokenExpiry, @IsSuperAdmin) " +
                                 "RETURNING *";
                     var data = await connection.QueryFirstOrDefaultAsync<SystemAdminUser>(query, admin);
@@ -67,7 +67,7 @@ namespace Pml.Infrastructure.Master.Repositories
                 using (var connection = new SqlConnection(_connection.ConnectionString))
                 {
                     connection.Open();
-                    var query = "DELETE FROM systemadminuser WHERE Id = @Id";
+                    var query = "DELETE FROM vendoruser WHERE Id = @Id";
                     var result = await connection.ExecuteAsync(query, new { Id = id });
                     connection.Close();
                     return result > 0;
@@ -90,7 +90,7 @@ namespace Pml.Infrastructure.Master.Repositories
                 using (var connection = new SqlConnection(_connection.ConnectionString))
                 {
                     connection.Open();
-                    var query = "SELECT * FROM systemadminuser";
+                    var query = "SELECT * FROM vendoruser";
                     var data = await connection.QueryAsync<SystemAdminUser>(query);
                     connection.Close();
                     return data;
@@ -114,7 +114,7 @@ namespace Pml.Infrastructure.Master.Repositories
                 using (var connection = new SqlConnection(_connection.ConnectionString))
                 {
                     connection.Open();
-                    var query = "SELECT * FROM systemadminuser WHERE Id = @Id";
+                    var query = "SELECT * FROM vendoruser WHERE Id = @Id";
                     var data = await connection.QueryFirstOrDefaultAsync<SystemAdminUser>(query, new { Id = id });
                     connection.Close();
                     return data;
@@ -138,7 +138,7 @@ namespace Pml.Infrastructure.Master.Repositories
                 using (var connection = new SqlConnection(_connection.ConnectionString))
                 {
                     connection.Open();
-                    var query = "SELECT * FROM systemadminuser WHERE RefreshToken = @RefreshToken";
+                    var query = "SELECT * FROM vendoruser WHERE RefreshToken = @RefreshToken";
                     var data = await connection.QueryFirstOrDefaultAsync<SystemAdminUser>(query, new { RefreshToken = refreshToken });
                     connection.Close();
                     return data;
@@ -162,7 +162,7 @@ namespace Pml.Infrastructure.Master.Repositories
                 using (var connection = new SqlConnection(_connection.ConnectionString))
                 {
                     connection.Open();
-                    var query = "SELECT * FROM dbo.systemadminuser WHERE Username = @Username";
+                    var query = "SELECT * FROM dbo.vendoruser WHERE Username = @Username";
                     var data = await connection.QueryFirstOrDefaultAsync<SystemAdminUser>(query, new { Username = username });
                     connection.Close();
                     return data;
@@ -187,7 +187,7 @@ namespace Pml.Infrastructure.Master.Repositories
                 {
                     connection.Open();
                     const string query = @"
-                            UPDATE SystemAdminUser
+                            UPDATE vendoruser
                             SET Name = @Name, 
                                 UserName = @UserName,
                                 Password = @Password,

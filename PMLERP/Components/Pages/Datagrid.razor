@@ -1,0 +1,436 @@
+﻿@page "/datagrid"
+
+@using System.ComponentModel.DataAnnotations
+
+<div class="datagrid-container">
+    <!-- Header Section -->
+    <div class="header-section">
+        <h2 class="page-title">Product Management</h2>
+        <div class="controls-section">
+         @*    <!-- Column Selector Dropdown -->
+            <div class="column-selector">
+                <label class="control-label">Select Columns:</label>
+                <SfDropDownList TValue="string"
+                                TItem="ColumnItem"
+                                DataSource="@ColumnItems"
+                                Placeholder="Choose columns to display"
+                                Mode="@VisualMode.CheckBox"
+                                ShowSelectAll="true"
+                                SelectAllText="Select All Columns"
+                                UnSelectAllText="Unselect All">
+                    <DropDownListFieldSettings Text="Text" Value="Value"></DropDownListFieldSettings>
+                    <DropDownListEvents TValue="string" TItem="ColumnItem" ValueChange="OnColumnSelectionChanged"></DropDownListEvents>
+                </SfDropDownList>
+            </div> *@
+
+            <!-- Additional Controls -->
+            <div class="action-buttons">
+                <SfButton CssClass="btn-primary" @onclick="RefreshGrid">
+                    <span class="btn-icon">🔄</span>
+                    Refresh
+                </SfButton>
+                <SfButton CssClass="btn-secondary" @onclick="ExportData">
+                    <span class="btn-icon">📊</span>
+                    Export
+                </SfButton>
+            </div>
+        </div>
+    </div>
+
+    <!-- DataGrid Section -->
+    <div class="grid-container">
+        <SfGrid @ref="Grid"
+                DataSource="@ProductData"
+                AllowPaging="true"
+                AllowSorting="true"
+                AllowFiltering="true"
+                AllowGrouping="true"
+                AllowReordering="true"
+                AllowResizing="true"
+                AllowSelection="true"
+                ShowColumnMenu="true"
+                EnableVirtualization="true"
+                Toolbar=@ToolbarItems
+                Height="600px">
+
+            <GridPageSettings PageSize="20" PageSizes="@(new int[] { 10, 20, 50, 100 })"></GridPageSettings>
+            <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Excel"></GridFilterSettings>
+            @* <GridGroupSettings ShowGroupedColumn="true"></GridGroupSettings> *@
+            <GridSelectionSettings Mode="Syncfusion.Blazor.Grids.SelectionMode.Row" Type="Syncfusion.Blazor.Grids.SelectionType.Multiple"></GridSelectionSettings>
+
+            <GridColumns>
+                <GridColumn Field="@nameof(Product.Id)"
+                            HeaderText="ID"
+                            Width="80"
+                            IsPrimaryKey="true"
+                            Type="ColumnType.Number">
+                </GridColumn>
+
+                <GridColumn Field="@nameof(Product.Name)"
+                            HeaderText="Product Name"
+                            Width="200">
+                </GridColumn>
+
+                <GridColumn Field="@nameof(Product.Category)"
+                            HeaderText="Category"
+                            Width="150">
+                </GridColumn>
+
+                <GridColumn Field="@nameof(Product.Price)"
+                            HeaderText="Price"
+                            Width="120"
+                            Format="C2"
+                            TextAlign="TextAlign.Right"
+                            Type="ColumnType.Number">
+                </GridColumn>
+
+                <GridColumn Field="@nameof(Product.Stock)"
+                            HeaderText="Stock"
+                            Width="100"
+                            TextAlign="TextAlign.Center"
+                            
+                            Type="ColumnType.Number">
+                </GridColumn>
+
+                <GridColumn Field="@nameof(Product.IsActive)"
+                            HeaderText="Active"
+                            Width="100"
+                            DisplayAsCheckBox="true"
+                            TextAlign="TextAlign.Center"
+                            
+                            Type="ColumnType.Boolean">
+                </GridColumn>
+
+                <GridColumn Field="@nameof(Product.CreatedDate)"
+                            HeaderText="Created Date"
+                            Width="150"
+                            Format="MM/dd/yyyy"
+                            
+                            Type="ColumnType.Date">
+                </GridColumn>
+
+                <GridColumn Field="@nameof(Product.Description)"
+                            HeaderText="Description"
+                            Width="250">
+                </GridColumn>
+
+                <GridColumn Field="@nameof(Product.Supplier)"
+                            HeaderText="Supplier"
+                            Width="150"
+                            >
+                </GridColumn>
+
+                <GridColumn Field="@nameof(Product.Rating)"
+                            HeaderText="Rating"
+                            Width="100"
+                            Format="N1"
+                            TextAlign="TextAlign.Center"
+                            Type="ColumnType.Number">
+                </GridColumn>
+            </GridColumns>
+
+            
+        </SfGrid>
+    </div>
+</div>
+
+<style>
+    .datagrid-container {
+        padding: 24px;
+        background: var(--bg-primary);
+        min-height: 100vh;
+        font-family: var(--body-font);
+    }
+
+    .header-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .page-title {
+        font-family: var(--heading-font);
+        font-size: 2rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+        letter-spacing: -0.025em;
+    }
+
+    .controls-section {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .column-selector {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-width: 280px;
+    }
+
+    .control-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .btn-icon {
+        margin-right: 6px;
+        font-size: 0.875rem;
+    }
+
+    .grid-container {
+        background: var(--bg-secondary);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+    }
+
+    /* Syncfusion Control Customizations */
+    .e-dropdownlist.e-control {
+        border: 2px solid var(--border-color);
+        border-radius: var(--border-radius);
+        background: var(--bg-secondary);
+        transition: all 0.3s ease;
+    }
+
+        .e-dropdownlist.e-control:hover {
+            border-color: var(--secondary-color);
+        }
+
+        .e-dropdownlist.e-control.e-focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+    .e-btn.btn-primary {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+        border-radius: var(--border-radius);
+        padding: 8px 16px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+        .e-btn.btn-primary:hover {
+            background: #2563eb;
+            border-color: #2563eb;
+            transform: translateY(-1px);
+        }
+
+    .e-btn.btn-secondary {
+        background: var(--secondary-color);
+        border-color: var(--secondary-color);
+        color: var(--text-primary);
+        border-radius: var(--border-radius);
+        padding: 8px 16px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+        .e-btn.btn-secondary:hover {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+            transform: translateY(-1px);
+        }
+
+    /* Grid Customizations */
+    .e-grid .e-gridheader {
+        background: linear-gradient(135deg, var(--bg-secondary) 0%, #f1f5f9 100%);
+        border-bottom: 2px solid var(--secondary-color);
+    }
+
+    .e-grid .e-headercell {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.875rem;
+        letter-spacing: 0.025em;
+    }
+
+    .e-grid .e-row:nth-child(even) {
+        background: #f8fafc;
+    }
+
+    .e-grid .e-row:hover {
+        background: rgba(200, 165, 91, 0.08);
+    }
+
+    .e-grid .e-selectionbackground {
+        background: rgba(59, 130, 246, 0.1) !important;
+    }
+
+    .e-grid .e-gridcontent {
+        border: none;
+    }
+
+    .e-grid .e-gridpager {
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--border-color);
+        padding: 12px 16px;
+    }
+
+    /* Dropdown Popup Customizations */
+    .e-ddl.e-popup {
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-lg);
+        background: var(--bg-secondary);
+    }
+
+    .e-ddl .e-list-item {
+        padding: 8px 12px;
+        color: var(--text-primary);
+        transition: background-color 0.2s ease;
+    }
+
+        .e-ddl .e-list-item:hover {
+            background: rgba(200, 165, 91, 0.1);
+        }
+
+        .e-ddl .e-list-item.e-active {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary-color);
+        }
+
+    /* Responsive Design */
+    @@media (max-width: 768px) {
+        .header-section
+
+    {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .controls-section {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .column-selector {
+        min-width: 100%;
+    }
+
+    .action-buttons {
+        justify-content: center;
+    }
+
+    .datagrid-container {
+        padding: 16px;
+    }
+
+    }
+
+    /* Dark Mode Styles */
+    .dark-mode .e-grid .e-gridheader {
+        background: linear-gradient(135deg, var(--bg-secondary) 0%, #334155 100%);
+    }
+
+    .dark-mode .e-grid .e-row:nth-child(even) {
+        background: rgba(51, 65, 85, 0.3);
+    }
+
+    .dark-mode .e-grid .e-row:hover {
+        background: rgba(212, 175, 55, 0.1);
+    }
+</style>
+
+@code {
+    private SfGrid<Product>? Grid;
+    private List<Product> ProductData = new();
+    public List<string> ToolbarItems = new List<string>() { "Search", "Print" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        // Sample data - replace with your actual data source
+        ProductData = new List<Product>
+        {
+            new Product { Id = 1, Name = "Diamond Ring", Category = "Jewelry", Price = 2500.00m, Stock = 15, IsActive = true, CreatedDate = DateTime.Now.AddDays(-30), Description = "Elegant diamond ring with 18k gold band", Supplier = "Luxury Gems Co.", Rating = 4.8 },
+            new Product { Id = 2, Name = "Gold Necklace", Category = "Jewelry", Price = 1800.00m, Stock = 8, IsActive = true, CreatedDate = DateTime.Now.AddDays(-25), Description = "Beautiful gold necklace with intricate design", Supplier = "Golden Crafts", Rating = 4.6 },
+            new Product { Id = 3, Name = "Silver Bracelet", Category = "Jewelry", Price = 350.00m, Stock = 22, IsActive = true, CreatedDate = DateTime.Now.AddDays(-20), Description = "Stylish silver bracelet with modern appeal", Supplier = "Silver Works", Rating = 4.3 },
+            new Product { Id = 4, Name = "Pearl Earrings", Category = "Jewelry", Price = 650.00m, Stock = 12, IsActive = true, CreatedDate = DateTime.Now.AddDays(-18), Description = "Classic pearl earrings for elegant occasions", Supplier = "Ocean Pearls", Rating = 4.7 },
+            new Product { Id = 5, Name = "Ruby Pendant", Category = "Jewelry", Price = 1200.00m, Stock = 6, IsActive = false, CreatedDate = DateTime.Now.AddDays(-15), Description = "Stunning ruby pendant with diamond accents", Supplier = "Gemstone Palace", Rating = 4.9 },
+            new Product { Id = 6, Name = "Platinum Watch", Category = "Accessories", Price = 3500.00m, Stock = 4, IsActive = true, CreatedDate = DateTime.Now.AddDays(-12), Description = "Luxury platinum watch with Swiss movement", Supplier = "TimeKeepers Ltd.", Rating = 4.8 },
+            new Product { Id = 7, Name = "Emerald Brooch", Category = "Jewelry", Price = 950.00m, Stock = 9, IsActive = true, CreatedDate = DateTime.Now.AddDays(-10), Description = "Vintage emerald brooch with gold setting", Supplier = "Antique Gems", Rating = 4.4 },
+            new Product { Id = 8, Name = "Crystal Tiara", Category = "Accessories", Price = 450.00m, Stock = 18, IsActive = true, CreatedDate = DateTime.Now.AddDays(-8), Description = "Sparkling crystal tiara for special events", Supplier = "Crown Jewels", Rating = 4.2 },
+            new Product { Id = 9, Name = "Sapphire Cufflinks", Category = "Accessories", Price = 800.00m, Stock = 10, IsActive = true, CreatedDate = DateTime.Now.AddDays(-5), Description = "Elegant sapphire cufflinks for formal wear", Supplier = "Elite Accessories", Rating = 4.5 },
+			new Product { Id = 10, Name = "Titanium Ring", Category = "Jewelry", Price = 400.00m, Stock = 20, IsActive = true, CreatedDate = DateTime.Now.AddDays(-2), Description = "Durable titanium ring with modern design", Supplier = "Modern Metals", Rating = 4.1 },
+        };
+
+        await Task.CompletedTask;
+    }
+
+
+
+    private async Task RefreshGrid()
+    {
+        await LoadData();
+        if (Grid != null)
+        {
+            await Grid.Refresh();
+        }
+    }
+
+    private async Task ExportData()
+    {
+        if (Grid != null)
+        {
+            await Grid.ExcelExport();
+        }
+    }
+
+    public class Product
+    {
+        public int Id { get; set; }
+
+        [Required]
+        [StringLength(100)]
+        public string Name { get; set; } = string.Empty;
+
+        [Required]
+        public string Category { get; set; } = string.Empty;
+
+        [Range(0, double.MaxValue)]
+        public decimal Price { get; set; }
+
+        [Range(0, int.MaxValue)]
+        public int Stock { get; set; }
+
+        public bool IsActive { get; set; }
+
+        public DateTime CreatedDate { get; set; }
+
+        [StringLength(500)]
+        public string Description { get; set; } = string.Empty;
+
+        public string Supplier { get; set; } = string.Empty;
+
+        [Range(0, 5)]
+        public double Rating { get; set; }
+    }
+
+    public class ColumnItem
+    {
+        public string Text { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
+    }
+}

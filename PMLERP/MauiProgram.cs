@@ -74,6 +74,9 @@ namespace PMLERP
             // Register toast service
             builder.Services.AddScoped<IToastService, ToastService>();
 
+            // Register system admin service
+            builder.Services.AddScoped<ISystemAdminUserService, SystemAdminService>();
+
             return builder.Build();
         }
     }
