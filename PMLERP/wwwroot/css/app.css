@@ -509,10 +509,7 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
     box-shadow: var(--shadow-md) !important;
 }
 
-/* --------------------------------------------------------------------------
-   RESPONSIVE UTILITIES
-   From: Lookups.razor (responsive breakpoints)
-   -------------------------------------------------------------------------- */
+
 @media (max-width: 768px) {
     .header-content {
         flex-direction: column;
@@ -535,10 +532,6 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
     }
 }
 
-/* --------------------------------------------------------------------------
-   SCROLLBAR STYLING
-   From: NavMenu.razor (generic scrollbar)
-   -------------------------------------------------------------------------- */
 .custom-scrollbar::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -559,10 +552,6 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
         background: rgba(59, 130, 246, 0.3);
     }
 
-/* --------------------------------------------------------------------------
-   ANIMATION UTILITIES
-   From: NavMenu.razor (pulse animation, transitions)
-   -------------------------------------------------------------------------- */
 .pulse {
     animation: pulse 2s infinite;
 }

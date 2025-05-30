@@ -565,7 +565,7 @@
     /* Main Content */
     .main-content {
         flex: 1;
-        overflow-y: auto;
+        overflow-y: hidden;
         height: 100%;
         display: flex;
         flex-direction: column;
@@ -662,8 +662,9 @@
 
     /* Content Wrapper */
     .content-wrapper {
-        padding: 1.5rem 2rem;
-        flex: 1;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
     }
 
     /* Mobile Styles */
@@ -699,9 +700,7 @@
         font-size: 1.3rem; /* Slightly smaller on mobile */
     }
 
-        .content-wrapper {
-            padding: 1rem;
-        }
+      
     }
 
     /* Animations */

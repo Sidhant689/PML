@@ -7,22 +7,6 @@
     <div class="header-section">
         <h2 class="page-title">Product Management</h2>
         <div class="controls-section">
-         @*    <!-- Column Selector Dropdown -->
-            <div class="column-selector">
-                <label class="control-label">Select Columns:</label>
-                <SfDropDownList TValue="string"
-                                TItem="ColumnItem"
-                                DataSource="@ColumnItems"
-                                Placeholder="Choose columns to display"
-                                Mode="@VisualMode.CheckBox"
-                                ShowSelectAll="true"
-                                SelectAllText="Select All Columns"
-                                UnSelectAllText="Unselect All">
-                    <DropDownListFieldSettings Text="Text" Value="Value"></DropDownListFieldSettings>
-                    <DropDownListEvents TValue="string" TItem="ColumnItem" ValueChange="OnColumnSelectionChanged"></DropDownListEvents>
-                </SfDropDownList>
-            </div> *@
-
             <!-- Additional Controls -->
             <div class="action-buttons">
                 <SfButton CssClass="btn-primary" @onclick="RefreshGrid">
@@ -51,7 +35,7 @@
                 ShowColumnMenu="true"
                 EnableVirtualization="true"
                 Toolbar=@ToolbarItems
-                Height="600px">
+                Height="400px">
 
             <GridPageSettings PageSize="20" PageSizes="@(new int[] { 10, 20, 50, 100 })"></GridPageSettings>
             <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Excel"></GridFilterSettings>
@@ -136,9 +120,8 @@
 
 <style>
     .datagrid-container {
-        padding: 24px;
+        padding: 1rem;
         background: var(--bg-primary);
-        min-height: 100vh;
         font-family: var(--body-font);
     }
 
@@ -146,9 +129,9 @@
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        margin-bottom: 24px;
+        margin-bottom: 1rem;
         flex-wrap: wrap;
-        gap: 16px;
+        gap: 1rem;
     }
 
     .page-title {

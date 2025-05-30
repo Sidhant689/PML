@@ -161,6 +161,7 @@
         if (JSRuntime != null)
         {
             await JSRuntime.InvokeVoidAsync("localStorage.setItem", "jewelErpDarkMode", isDarkMode);
+            await JSRuntime.InvokeVoidAsync("toggleTheme");
         }
     }
 
