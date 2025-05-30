@@ -1,0 +1,267 @@
+﻿
+@using Task = System.Threading.Tasks.Task
+@page "/master/dateformat"
+@inject IToastService ToastService
+
+@using System.Globalization
+<style>
+    .calendar-overlay {
+        display:flex;
+        gap:10px;
+        position: absolute;
+        z-index: 1000;
+        top: 100%;
+        left: 0;
+        /* border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15); */
+        margin-top: 0.25rem;
+        align-items:flex-start;
+    }
+
+    .timepicker-fix {
+        transform: none !important;
+        rotate: none !important;
+    }
+    /* Mobile responsiveness */
+   @@media (max-width: 768px) {
+        .calendar-overlay {
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90vw;
+            max-width: none;
+        }
+    }
+    .mt-2{
+
+    }
+</style>
+    <div class="mb-3">
+        <label for="dueDate" class="form-label">Due Date</label>
+        <div class="d-flex align-items-center position-relative">
+            <!-- Input and Button -->
+            <div class="d-flex align-items-center" style="width: 80%;">
+                <InputText id="dueDate"
+                           @bind-Value="dueDateString"
+                           class="form-control me-2"
+                           placeholder="dd/mm/yyyy"
+                           @onblur="FormatDateString" />
+
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        @onclick="@(() => showCalendar = !showCalendar)">
+                    <i class="bi bi-calendar"></i>
+                </button>
+            </div>
+
+            <!-- Calendar Popup -->
+            @if (showCalendar)
+            {
+                <div class="calendar-overlay">
+                    <SfCalendar TValue="DateTime?"
+                                @bind-Value="@selectedDate"
+                                Min="@minDate"
+                                Max="@maxDate"
+                               >
+                        <CalendarEvents TValue="DateTime?" ValueChange="@OnDateSelected"></CalendarEvents>
+                    </SfCalendar>
+                    <SfTimePicker TValue="DateTime?"
+                                  @bind-Value="@selectedTime"
+                                  Placeholder="Select time"
+                                  Format="hh:mm tt"
+                                  CssClass="timepicker-fix">
+                        <TimePickerEvents TValue="DateTime?" ValueChange="@OnTimeSelected"></TimePickerEvents>
+                    </SfTimePicker>
+                </div>
+            }
+        </div>
+        
+    </div>
+
+
+
+@code {
+
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+
+}
+@* //binding sfcalendaer value to task.due date string  *@
+@code {
+    
+    private string dueDateString = string.Empty;
+    private bool showCalendar = false;
+    private DateTime? selectedDate;
+    private DateTime? selectedTime;
+
+    private DateTime minDate = DateTime.Now;
+    private DateTime maxDate = DateTime.Now.AddYears(1);
+
+    // Date Handling
+    private void OnDateSelected(ChangedEventArgs<DateTime?> args)
+    {
+        if (args.Value.HasValue)
+        {
+            selectedDate = args.Value;
+            UpdateDueDateString(selectedDate);
+        }
+    }
+    private void OnTimeSelected(Syncfusion.Blazor.Calendars.ChangeEventArgs<DateTime?> args)
+    {
+        selectedTime = args.Value;
+        if (string.IsNullOrWhiteSpace(dueDateString) ||
+            dueDateString.Length < 10 ||
+            !DateTime.TryParseExact(dueDateString.Substring(0, 10), "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsedDate))
+        {
+            // Show alert if date is missing or invalid
+            ToastService.ShowWarningAsync("Date is not selected",
+                                            "Please select a date before selecting time.");
+      
+            return;
+        }
+        var date = parsedDate.Date;
+        UpdateDueDateString(date);
+    }
+    private void UpdateDueDateString(DateTime? date)
+    {
+        // Validate date parameter
+        if (!date.HasValue)
+        {
+            // Try to get date from existing string
+            if (!string.IsNullOrWhiteSpace(dueDateString) &&
+                DateTime.TryParseExact(dueDateString, "dd/MM/yyyy hh:mm:tt",
+                                      CultureInfo.InvariantCulture, DateTimeStyles.None,
+                                      out DateTime existingDate))
+            {
+                date = existingDate.Date;
+            }
+            else if (selectedDate.HasValue)
+            {
+                date = selectedDate.Value.Date;
+            }
+            else
+            {
+                // No valid date available
+                dueDateString = string.Empty;
+                return;
+            }
+        }
+
+        // Default to midnight if no time selected
+        TimeSpan time = selectedTime?.TimeOfDay ?? TimeSpan.Zero;
+
+        // Combine date and time
+        DateTime combined = date.Value.Date + time;
+
+        // Format as string - use non-nullable DateTime for formatting
+        dueDateString = combined.ToString("dd/MM/yyyy hh:mm:tt", CultureInfo.InvariantCulture);
+    }
+}   
+
+@code {
+    @inject IJSRuntime JS
+      // Toast configuration
+
+    private async Task FormatDateString()
+    {
+        
+        var value = dueDateString;
+        if (string.IsNullOrEmpty(value))
+            return;
+
+            var result = await JS.InvokeAsync<string>("parseDateString", value);
+            if (result != null)
+            {
+                dueDateString = result;
+            }
+    }
+}
+
+<script>
+        function showAlert(message) {
+        alert(message);
+    }
+    function parseDateString(input) {
+       // Clean input: remove hyphens and whitespace
+        const cleaned = input.replace(/\//g, '').trim();
+      
+        let day, month, year;
+        const validLengths = [2, 4, 6, 8];
+        if (!validLengths.includes(cleaned.length)) {
+            alert(`Error: Invalid format length (${cleaned.length} digits)\nUse DD, DDMM, DDMMYY, or DDMMYYYY`);
+            return null;
+        }
+        // Parse components based on length
+        try {
+            switch(cleaned.length) {
+                case 2: // DD format
+                    day = parseInt(cleaned.substring(0, 2), 10);
+                    month = new Date().getMonth() + 1;
+                    year = new Date().getFullYear();
+                    break;
+
+                case 4: // DDMM format
+                    day = parseInt(cleaned.substring(0, 2), 10);
+                    month = parseInt(cleaned.substring(2, 4), 10);
+                    year = new Date().getFullYear();
+                    break;
+
+                case 6: // DDMMYY format
+                    day = parseInt(cleaned.substring(0, 2), 10);
+                    month = parseInt(cleaned.substring(2, 4), 10);
+                    year = 2000 + parseInt(cleaned.substring(4, 6), 10);
+                    break;
+
+                case 8: // DDMMYYYY format
+                    day = parseInt(cleaned.substring(0, 2), 10);
+                    month = parseInt(cleaned.substring(2, 4), 10);
+                    year = parseInt(cleaned.substring(4, 8), 10);
+                    break;
+            }
+        } catch {
+            alert("Error: Invalid date format");
+            return null;
+        }
+
+        // Validate components
+        // Day check
+        if (day < 1 || day > 31) {
+            alert("Invalid day");
+            return null;
+        }
+
+        // Month check
+        if (month < 1 || month > 12) {
+            alert("Invalid month");
+            return null;
+        }
+
+        // Year check
+        if (year < 1000 || year > 9999) {
+            alert("Invalid year");
+            return null;
+        }
+
+        // Validate date existence
+        const tempDate = new Date(year, month - 1, day);
+        if (!isValidDate(tempDate, day, month, year)) {
+            alert("Invalid date combination");
+            return null;
+        }
+        // Return formatted date
+        return `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`;
+    }
+        function isValidDate(date, day, month, year) {
+        // Check if the Date object is valid (not NaN)
+        if (isNaN(date.getTime())) {
+            return false;
+        }
+
+        // Verify components match (month is 0-based in JS)
+        return (
+            date.getDate() === day &&
+            date.getMonth() === month - 1 &&
+            date.getFullYear() === year
+        );
+    }
+</script>
