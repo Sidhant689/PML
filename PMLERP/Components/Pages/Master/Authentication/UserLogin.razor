@@ -1,7 +1,5 @@
-﻿@page "/user-login"
+﻿@page "/login"
 @using PMLERP.IServices.Master
-
-
 
 @layout LoginLayout
 
@@ -20,7 +18,7 @@
         </div>
 
         <div class="login-card">
-            <div class="card-header" style="justify-content: center">
+            <div class="card-header">
                 <div class="card-header-content">
                     <h3 class="login-title">User Login</h3>
                     <p class="login-subtitle">Access your jewelry workspace</p>
@@ -30,124 +28,117 @@
                 <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
                     <DataAnnotationsValidator />
 
-                    <div class="form-group">
-                        <label for="username">Username</label>
-                        <div class="input-with-icon">
-                            <i class="bi bi-person input-icon"></i>
-                            <input type="text"
-                                   id="username"
-                                   class="form-control"
-                                   @bind="loginModel.Username"
-                                   placeholder="Enter your username" />
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="username">Username</label>
+                            <div class="input-with-icon">
+                                <i class="bi bi-person input-icon"></i>
+                                <input type="text"
+                                       id="username"
+                                       class="form-control"
+                                       @bind="loginModel.Username"
+                                       placeholder="Enter your username" />
+                            </div>
+                            <ValidationMessage For="@(() => loginModel.Username)" class="validation-message" />
                         </div>
-                        <ValidationMessage For="@(() => loginModel.Username)" class="validation-message" />
+
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <div class="input-with-icon">
+                                <i class="bi bi-lock input-icon"></i>
+                                <input type="@(showPassword ? "text" : "password")"
+                                       id="password"
+                                       class="form-control password-input"
+                                       @bind="loginModel.Password"
+                                       placeholder="Enter your password" />
+                                <button type="button" class="password-toggle-btn" @onclick="TogglePasswordVisibility">
+                                    <i class="bi @(showPassword ? "bi-eye-slash" : "bi-eye")"></i>
+                                </button>
+                            </div>
+                            <ValidationMessage For="@(() => loginModel.Password)" class="validation-message" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="passcode">Passcode</label>
+                            <div class="input-with-icon">
+                                <i class="bi bi-shield-lock input-icon"></i>
+                                <input type="@(showPasscode ? "text" : "password")"
+                                       id="passcode"
+                                       class="form-control password-input"
+                                       @bind="loginModel.Passcode"
+                                       placeholder="Enter your passcode" />
+                                <button type="button" class="password-toggle-btn" @onclick="TogglePasscodeVisibility">
+                                    <i class="bi @(showPasscode ? "bi-eye-slash" : "bi-eye")"></i>
+                                </button>
+                            </div>
+                            <ValidationMessage For="@(() => loginModel.Passcode)" class="validation-message" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="company">Company</label>
+                            <div class="input-with-icon">
+                                <i class="bi bi-building input-icon"></i>
+                                <select id="company"
+                                        class="form-control form-select"
+                                        @bind="loginModel.CompanyId">
+                                    <option value="">Select Company</option>
+                                    @foreach (var company in companies)
+                                    {
+                                        <option value="@company.Id">@company.Name</option>
+                                    }
+                                </select>
+                            </div>
+                            <ValidationMessage For="@(() => loginModel.CompanyId)" class="validation-message" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="language">Language</label>
+                            <div class="input-with-icon">
+                                <i class="bi bi-translate input-icon"></i>
+                                <select id="language"
+                                        class="form-control form-select"
+                                        @bind="loginModel.Language">
+                                    <option value="">Select Language</option>
+                                    @foreach (var language in languages)
+                                    {
+                                        <option value="@language.Code">@language.Name</option>
+                                    }
+                                </select>
+                            </div>
+                            <ValidationMessage For="@(() => loginModel.Language)" class="validation-message" />
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="password">Password</label>
-                        <div class="input-with-icon">
-                            <i class="bi bi-lock input-icon"></i>
-                            <input type="@(showPassword ? "text" : "password")"
-                                   id="password"
-                                   class="form-control password-input"
-                                   @bind="loginModel.Password"
-                                   placeholder="Enter your password" />
-                            <button type="button" class="password-toggle-btn" @onclick="TogglePasswordVisibility">
-                                <i class="bi @(showPassword ? "bi-eye-slash" : "bi-eye")"></i>
+                    <div class="form-footer">
+                        <div class="remember-me-container">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="rememberMe" @bind="rememberMe" />
+                                <label class="form-check-label" for="rememberMe">Remember me</label>
+                            </div>
+                            <button type="button" class="theme-toggle-btn" @onclick="ToggleTheme" title="Toggle Theme">
+                                <i class="bi @(isDarkMode ? "bi-sun" : "bi-moon")"></i>
                             </button>
                         </div>
-                        <ValidationMessage For="@(() => loginModel.Password)" class="validation-message" />
-                    </div>
 
-                    <div class="form-group">
-                        <label for="passcode">Passcode</label>
-                        <div class="input-with-icon">
-                            <i class="bi bi-shield-lock input-icon"></i>
-                            <input type="@(showPasscode ? "text" : "password")"
-                                   id="passcode"
-                                   class="form-control password-input"
-                                   @bind="loginModel.Passcode"
-                                   placeholder="Enter your passcode" />
-                            <button type="button" class="password-toggle-btn" @onclick="TogglePasscodeVisibility">
-                                <i class="bi @(showPasscode ? "bi-eye-slash" : "bi-eye")"></i>
+                        <div class="login-button-container">
+                            <button type="submit"
+                                    class="btn login-button"
+                                    disabled="@isLoading">
+                                @if (isLoading)
+                                {
+                                    <div class="spinner-border spinner-border-sm me-2" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <span class="loading-text">Signing In...</span>
+                                }
+                                else
+                                {
+                                    <span>Sign In</span>
+                                }
                             </button>
                         </div>
-                        <ValidationMessage For="@(() => loginModel.Passcode)" class="validation-message" />
-                    </div>
-
-                    <div class="form-group">
-                        <label for="company">Company</label>
-                        <div class="input-with-icon">
-                            <i class="bi bi-building input-icon"></i>
-                            <select id="company"
-                                    class="form-control form-select"
-                                    @bind="loginModel.CompanyId">
-                                <option value="">Select Company</option>
-                                @foreach (var company in companies)
-                                {
-                                    <option value="@company.Id">@company.Name</option>
-                                }
-                            </select>
-                        </div>
-                        <ValidationMessage For="@(() => loginModel.CompanyId)" class="validation-message" />
-                    </div>
-
-                    <div class="form-group">
-                        <label for="language">Language</label>
-                        <div class="input-with-icon">
-                            <i class="bi bi-translate input-icon"></i>
-                            <select id="language"
-                                    class="form-control form-select"
-                                    @bind="loginModel.Language">
-                                <option value="">Select Language</option>
-                                @foreach (var language in languages)
-                                {
-                                    <option value="@language.Code">@language.Name</option>
-                                }
-                            </select>
-                        </div>
-                        <ValidationMessage For="@(() => loginModel.Language)" class="validation-message" />
-                    </div>
-
-                    <div class="remember-me-container">
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="rememberMe" @bind="rememberMe" />
-                            <label class="form-check-label" for="rememberMe">Remember me</label>
-                        </div>
-                    </div>
-
-                    <div class="form-group login-button-container">
-                        <button type="submit"
-                                class="btn login-button"
-                                disabled="@isLoading">
-                            @if (isLoading)
-                            {
-                                <div class="spinner-border spinner-border-sm me-2" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                                <span class="loading-text">Signing In...</span>
-                            }
-                            else
-                            {
-                                <span>Sign In</span>
-                            }
-                        </button>
                     </div>
                 </EditForm>
-
-                <div class="register-link-container">
-                    <p>Need access? <a href="/contact" class="register-link">Contact Administrator</a></p>
-                </div>
-
-                <div class="admin-login-container">
-                    <p><a href="/login" class="admin-link">Administrator Login</a></p>
-                </div>
-
-                <div class="theme-toggle-container">
-                    <button class="theme-toggle-btn" @onclick="ToggleTheme" title="Toggle Theme">
-                        <i class="bi @(isDarkMode ? "bi-sun" : "bi-moon")"></i>
-                    </button>
-                </div>
             </div>
         </div>
 
@@ -305,11 +296,9 @@
     .login-page-wrapper {
         display: flex;
         justify-content: center;
-        align-items: center;
-        min-height: 100vh;
+        align-items: flex-start;
         width: 100%;
         background: linear-gradient(135deg, #f0f7ff 0%, var(--bg-primary) 100%);
-        padding: 2rem 1rem;
         box-sizing: border-box;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     }
@@ -320,22 +309,23 @@
 
     .login-container {
         width: 100%;
-        max-width: 450px;
+        max-width: 800px;
         display: flex;
         flex-direction: column;
         align-items: center;
+        padding-top: 1rem;
     }
 
     /* Company Branding */
     .company-branding {
         text-align: center;
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
     }
 
     .logo-container {
         background-color: var(--secondary-color);
-        width: 64px;
-        height: 64px;
+        width: 60px;
+        height: 60px;
         border-radius: 16px;
         display: flex;
         align-items: center;
@@ -345,19 +335,19 @@
     }
 
         .logo-container i {
-            font-size: 32px;
+            font-size: 28px;
             color: white;
         }
 
     .company-name {
-        font-size: 1.75rem;
+        font-size: 1.65rem;
         font-weight: 700;
         color: var(--text-primary);
         margin: 0.5rem 0 0.25rem;
     }
 
     .tagline {
-        font-size: 1rem;
+        font-size: 0.95rem;
         color: var(--text-secondary);
         margin: 0;
     }
@@ -374,12 +364,12 @@
     }
 
         .login-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-2px);
             box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
         }
 
     .card-header {
-        padding: 1.5rem 1.5rem 0;
+        padding: 1.25rem 1.5rem 0;
     }
 
     .card-header-content {
@@ -389,32 +379,39 @@
 
     .login-title {
         margin: 0;
-        font-size: 1.5rem;
+        font-size: 1.4rem;
         font-weight: 600;
         color: var(--text-primary);
     }
 
     .login-subtitle {
         margin: 0.25rem 0 0;
-        font-size: 0.875rem;
+        font-size: 0.85rem;
         color: var(--text-secondary);
     }
 
     .card-content {
-        padding: 1.5rem;
+        padding: 1.25rem 1.5rem 1.5rem;
+    }
+
+    /* Form Grid Layout */
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem 1.5rem;
+        margin-bottom: 1.5rem;
     }
 
     /* Form Elements */
     .form-group {
-        margin-bottom: 1.5rem;
         width: 100%;
     }
 
         .form-group label {
             display: block;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.4rem;
             font-weight: 500;
-            font-size: 0.875rem;
+            font-size: 0.85rem;
             color: var(--text-primary);
         }
 
@@ -429,7 +426,7 @@
         transform: translateY(-50%);
         color: var(--text-secondary);
         z-index: 2;
-        font-size: 1.1rem;
+        font-size: 1rem;
     }
 
     .dark-mode .input-icon {
@@ -438,9 +435,9 @@
 
     .form-control {
         width: 100%;
-        padding: 0.75rem 0.75rem 0.75rem 2.5rem;
-        font-size: 1rem;
-        line-height: 1.5;
+        padding: 0.7rem 0.7rem 0.7rem 2.4rem;
+        font-size: 0.95rem;
+        line-height: 1.4;
         color: var(--text-primary);
         background-color: var(--bg-secondary);
         border: 1px solid var(--border-color);
@@ -450,7 +447,7 @@
     }
 
     .password-input {
-        padding-right: 2.5rem;
+        padding-right: 2.4rem;
     }
 
     .form-select {
@@ -517,8 +514,17 @@
             color: var(--secondary-color);
         }
 
+    /* Form Footer */
+    .form-footer {
+        border-top: 1px solid var(--border-color);
+        padding-top: 1.25rem;
+    }
+
     .remember-me-container {
-        margin-bottom: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.25rem;
     }
 
     .form-check {
@@ -531,77 +537,17 @@
     }
 
     .form-check-label {
-        font-size: 0.875rem;
+        font-size: 0.85rem;
         color: var(--text-secondary);
     }
 
-    /* Button Styling */
-    .login-button-container {
-        margin-top: 2rem;
-    }
-
-    .login-button {
-        width: 100%;
-        height: 48px;
-        border-radius: 8px;
-        font-weight: 500;
-        font-size: 1rem;
-        background-color: var(--secondary-color);
-        border-color: var(--secondary-color);
-        color: white;
-        box-shadow: 0 2px 4px rgba(200, 165, 91, 0.2);
-        transition: all 0.3s ease;
-    }
-
-        .login-button:hover {
-            background-color: var(--accent-color);
-            border-color: var(--accent-color);
-            box-shadow: 0 4px 6px rgba(200, 165, 91, 0.3);
-        }
-
-    .spinner-border {
-        margin-right: 0.5rem;
-    }
-
-    .loading-text {
-        vertical-align: middle;
-    }
-
-    /* Links */
-    .register-link-container, .admin-login-container {
-        margin-top: 1.5rem;
-        text-align: center;
-    }
-
-        .register-link-container p, .admin-login-container p {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
-
-    .register-link, .admin-link {
-        color: var(--secondary-color);
-        text-decoration: none;
-        font-weight: 500;
-    }
-
-        .register-link:hover, .admin-link:hover {
-            text-decoration: underline;
-            color: var(--accent-color);
-        }
-
     /* Theme Toggle */
-    .theme-toggle-container {
-        display: flex;
-        justify-content: center;
-        margin-top: 1.5rem;
-    }
-
     .theme-toggle-btn {
         background: none;
         border: none;
         color: var(--text-secondary);
-        width: 40px;
-        height: 40px;
+        width: 36px;
+        height: 36px;
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -624,9 +570,41 @@
             color: var(--secondary-color);
         }
 
+    /* Button Styling */
+    .login-button-container {
+        margin-top: 0;
+    }
+
+    .login-button {
+        width: 100%;
+        height: 44px;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.95rem;
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color);
+        color: white;
+        box-shadow: 0 2px 4px rgba(200, 165, 91, 0.2);
+        transition: all 0.3s ease;
+    }
+
+        .login-button:hover {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+            box-shadow: 0 4px 6px rgba(200, 165, 91, 0.3);
+        }
+
+    .spinner-border {
+        margin-right: 0.5rem;
+    }
+
+    .loading-text {
+        vertical-align: middle;
+    }
+
     /* Footer */
     .login-footer {
-        margin-top: 2rem;
+        margin-top: 1.5rem;
         text-align: center;
     }
 
@@ -638,28 +616,83 @@
     /* Validation */
     .validation-message {
         color: var(--error-color);
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         margin-top: 0.25rem;
     }
 
-    /* Responsive Adjustments */
-    @@media (max-width: 576px) {
+    /* Mobile Responsive */
+    @@media (max-width: 768px) {
         .login-page-wrapper
 
     {
-        padding: 1rem 0.5rem;
+        padding: 0.5rem;
+        align-items: center;
     }
 
-    .login-card {
-        border-radius: 12px;
+    .login-container {
+        max-width: 100%;
+        padding-top: 0.5rem;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
     }
 
     .company-name {
         font-size: 1.5rem;
     }
 
+    .login-card {
+        border-radius: 12px;
+    }
+
     .card-content {
-        padding: 1.25rem;
+        padding: 1rem 1.25rem 1.25rem;
+    }
+
+    .remember-me-container {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+
+    .form-check {
+        justify-content: center;
+    }
+
+    .theme-toggle-btn {
+        align-self: center;
+    }
+
+    }
+
+    @@media (max-width: 480px) {
+        .login-page-wrapper
+
+    {
+        padding: 0.25rem;
+    }
+
+    .card-content {
+        padding: 0.875rem 1rem 1rem;
+    }
+
+    .company-branding {
+        margin-bottom: 1rem;
+    }
+
+    .logo-container {
+        width: 50px;
+        height: 50px;
+    }
+
+        .logo-container i {
+            font-size: 24px;
+        }
+
+    .company-name {
+        font-size: 1.35rem;
     }
 
     }

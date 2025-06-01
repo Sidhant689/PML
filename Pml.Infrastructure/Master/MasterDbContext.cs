@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using Pml.Shared.Entities.Settings;
 
@@ -19,6 +20,6 @@ namespace Pml.Infrastructure.Master
             _connectionString = options.Value.MasterConnectionString;
         }
 
-        public IDbConnection CreateConnection() => new SqlConnection(_connectionString);
+        public IDbConnection CreateConnection() => new SqliteConnection(_connectionString);
     }
 }
