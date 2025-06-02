@@ -1,56 +1,20 @@
-﻿// Solution 1: Modify UserRepository to use the Factory Pattern
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Pml.Domain.IRepositories.Client;
 using Pml.Shared.Entities.Models.Client;
-using Pml.Shared.Entities.Models.Master;
-using Pml.Domain.IRepositories.Master;
-using Microsoft.AspNetCore.Http;
-using System.Security.Claims;
-using Microsoft.Extensions.DependencyInjection;
-using Pml.Infrastructure.Client.Factory;
-using Pml.Infrastructure.Client;
-using Pml.Infrastructure.Master.Repositories;
 
-namespace Pml.Infrastructure.Client
+namespace Pml.Infrastructure.Client.ClientRepositories
 {
     public class UserRepository : IUserRepository
     {
-        private readonly IClientRepositoryFactory _clientRepositoryFactory;
-        private readonly ICompanyRepository _companyRepository;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IClientRepository _clientRepository;
 
-        public UserRepository(
-            IClientRepositoryFactory clientRepositoryFactory,
-            ICompanyRepository companyRepository,
-            IHttpContextAccessor httpContextAccessor)
+        public UserRepository(IClientRepository clientRepository)
         {
-            _clientRepositoryFactory = clientRepositoryFactory;
-            _companyRepository = companyRepository;
-            _httpContextAccessor = httpContextAccessor;
-        }
-
-        // Helper method to get the appropriate client repository
-        private async Task<IClientRepository> GetClientRepositoryAsync()
-        {
-            // Get company ID from user claims
-            var companyIdClaim = 1.ToString();
-            if (string.IsNullOrEmpty(companyIdClaim) || !int.TryParse(companyIdClaim, out int companyId))
-            {
-                throw new UnauthorizedAccessException("Company ID not found in user claims");
-            }
-
-            // Get company database configuration
-            var companyDatabase = await _companyRepository.GetDefaultDatabaseAsync(companyId);
-            if (companyDatabase == null)
-            {
-                throw new InvalidOperationException($"No database configuration found for company {companyId}");
-            }
-
-            return await _clientRepositoryFactory.CreateClientRepositoryAsync(companyDatabase);
+            _clientRepository = clientRepository;
         }
 
         /// <summary>
@@ -62,16 +26,14 @@ namespace Pml.Infrastructure.Client
         {
             try
             {
-                var clientRepository = await GetClientRepositoryAsync();
-
                 var query = @"
                     SELECT u.*, r.RoleName, r.RoleDescription 
-                    FROM [User] u 
-                    LEFT JOIN Role r ON u.UserRoleCode = r.Id 
+                    FROM [Users] u 
+                    LEFT JOIN Roles r ON u.UserRoleCode = r.Id 
                     WHERE u.Id = @Id AND u.IsActive = 1";
 
                 var parameters = new { Id = id };
-                var result = await clientRepository.ExecuteQueryAsync(query, parameters);
+                var result = await _clientRepository.ExecuteQueryAsync(query, parameters);
                 var userData = result.FirstOrDefault();
 
                 if (userData == null)
@@ -94,16 +56,14 @@ namespace Pml.Infrastructure.Client
         {
             try
             {
-                var clientRepository = await GetClientRepositoryAsync();
-
                 var query = @"
                     SELECT u.*, r.RoleName, r.RoleDescription 
-                    FROM [User] u 
-                    LEFT JOIN Role r ON u.UserRoleCode = r.Id 
+                    FROM [Users] u 
+                    LEFT JOIN Roles r ON u.UserRoleCode = r.Id 
                     WHERE u.UserName = @Username AND u.IsActive = 1";
 
                 var parameters = new { Username = username };
-                var result = await clientRepository.ExecuteQueryAsync(query, parameters);
+                var result = await _clientRepository.ExecuteQueryAsync(query, parameters);
                 var userData = result.FirstOrDefault();
 
                 if (userData == null)
@@ -126,16 +86,14 @@ namespace Pml.Infrastructure.Client
         {
             try
             {
-                var clientRepository = await GetClientRepositoryAsync();
-
                 var query = @"
                     SELECT u.*, r.RoleName, r.RoleDescription 
-                    FROM [User] u 
-                    LEFT JOIN Role r ON u.UserRoleCode = r.Id 
+                    FROM [Users] u 
+                    LEFT JOIN Roles r ON u.UserRoleCode = r.Id 
                     WHERE u.UserEmail = @Email AND u.IsActive = 1";
 
                 var parameters = new { Email = email };
-                var result = await clientRepository.ExecuteQueryAsync(query, parameters);
+                var result = await _clientRepository.ExecuteQueryAsync(query, parameters);
                 var userData = result.FirstOrDefault();
 
                 if (userData == null)
@@ -157,8 +115,6 @@ namespace Pml.Infrastructure.Client
         {
             try
             {
-                var clientRepository = await GetClientRepositoryAsync();
-
                 var query = @"
                     SELECT u.*, r.RoleName, r.RoleDescription 
                     FROM [Users] u 
@@ -166,7 +122,7 @@ namespace Pml.Infrastructure.Client
                     WHERE u.IsActive = 1
                     ORDER BY u.Name";
 
-                var result = await clientRepository.ExecuteQueryAsync(query);
+                var result = await _clientRepository.ExecuteQueryAsync(query);
                 return result.Select(MapToUser);
             }
             catch (Exception ex)
@@ -184,22 +140,46 @@ namespace Pml.Infrastructure.Client
         {
             try
             {
-                var clientRepository = await GetClientRepositoryAsync();
-
                 var query = @"
                     SELECT u.*, r.RoleName, r.RoleDescription 
-                    FROM [User] u 
-                    LEFT JOIN Role r ON u.UserRoleCode = r.Id 
+                    FROM [Users] u 
+                    LEFT JOIN Roles r ON u.UserRoleCode = r.Id 
                     WHERE u.CompanyId = @CompanyId AND u.IsActive = 1
                     ORDER BY u.Name";
 
                 var parameters = new { CompanyId = companyId };
-                var result = await clientRepository.ExecuteQueryAsync(query, parameters);
+                var result = await _clientRepository.ExecuteQueryAsync(query, parameters);
                 return result.Select(MapToUser);
             }
             catch (Exception ex)
             {
                 throw new Exception($"Error getting users by company ID {companyId}: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Gets all users with a specific role.
+        /// </summary>
+        /// <param name="roleId">The role ID.</param>
+        /// <returns>A collection of users with the specified role.</returns>
+        public async Task<IEnumerable<User>> GetByRoleAsync(int roleId)
+        {
+            try
+            {
+                var query = @"
+                    SELECT u.*, r.RoleName, r.RoleDescription 
+                    FROM [Users] u 
+                    LEFT JOIN Roles r ON u.UserRoleCode = r.Id 
+                    WHERE u.UserRoleCode = @RoleId AND u.IsActive = 1
+                    ORDER BY u.Name";
+
+                var parameters = new { RoleId = roleId };
+                var result = await _clientRepository.ExecuteQueryAsync(query, parameters);
+                return result.Select(MapToUser);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error getting users by role ID {roleId}: {ex.Message}", ex);
             }
         }
 
@@ -212,10 +192,8 @@ namespace Pml.Infrastructure.Client
         {
             try
             {
-                var clientRepository = await GetClientRepositoryAsync();
-
                 var query = @"
-                    INSERT INTO [User] (Name, UserName, Password, UserStatus, UserEmail, UserPhone, 
+                    INSERT INTO [Users] (Name, UserName, Password, UserStatus, UserEmail, UserPhone, 
                                        UserAddress, UserRoleCode, CompanyId, CreatedDate, IsActive)
                     VALUES (@Name, @UserName, @Password, @UserStatus, @UserEmail, @UserPhone, 
                             @UserAddress, @UserRoleCode, @CompanyId, @CreatedDate, @IsActive);
@@ -236,7 +214,7 @@ namespace Pml.Infrastructure.Client
                     user.IsActive
                 };
 
-                var result = await clientRepository.ExecuteQueryAsync(query, parameters);
+                var result = await _clientRepository.ExecuteQueryAsync(query, parameters);
                 var newId = Convert.ToInt32(result.FirstOrDefault());
 
                 return await GetByIdAsync(newId);
@@ -256,10 +234,8 @@ namespace Pml.Infrastructure.Client
         {
             try
             {
-                var clientRepository = await GetClientRepositoryAsync();
-
                 var query = @"
-                    UPDATE [User] 
+                    UPDATE [Users] 
                     SET Name = @Name, UserName = @UserName, UserStatus = @UserStatus, 
                         UserEmail = @UserEmail, UserPhone = @UserPhone, UserAddress = @UserAddress,
                         UserRoleCode = @UserRoleCode, ModifiedDate = @ModifiedDate
@@ -278,7 +254,7 @@ namespace Pml.Infrastructure.Client
                     user.Id
                 };
 
-                await clientRepository.ExecuteCommandAsync(query, parameters);
+                await _clientRepository.ExecuteCommandAsync(query, parameters);
                 return await GetByIdAsync(user.Id);
             }
             catch (Exception ex)
@@ -296,12 +272,10 @@ namespace Pml.Infrastructure.Client
         {
             try
             {
-                var clientRepository = await GetClientRepositoryAsync();
-
-                var query = "UPDATE [User] SET IsActive = 0, ModifiedDate = @ModifiedDate WHERE Id = @Id";
+                var query = "UPDATE [Users] SET IsActive = 0, ModifiedDate = @ModifiedDate WHERE Id = @Id";
                 var parameters = new { Id = id, ModifiedDate = DateTime.UtcNow };
 
-                var result = await clientRepository.ExecuteCommandAsync(query, parameters);
+                var result = await _clientRepository.ExecuteCommandAsync(query, parameters);
                 return result > 0;
             }
             catch (Exception ex)
@@ -310,8 +284,53 @@ namespace Pml.Infrastructure.Client
             }
         }
 
-        // ... (Continue with remaining methods using the same pattern)
-        // I'll show a few more key methods:
+        /// <summary>
+        /// Activates a user account.
+        /// </summary>
+        /// <param name="id">The user ID.</param>
+        /// <returns>True if the user was activated; otherwise, false.</returns>
+        public async Task<bool> ActivateUserAsync(int id)
+        {
+            try
+            {
+                var query = @"
+                    UPDATE [Users] 
+                    SET IsActive = 1, UserStatus = 'Active', ModifiedDate = @ModifiedDate 
+                    WHERE Id = @Id";
+
+                var parameters = new { Id = id, ModifiedDate = DateTime.UtcNow };
+                var result = await _clientRepository.ExecuteCommandAsync(query, parameters);
+                return result > 0;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error activating user: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Deactivates a user account.
+        /// </summary>
+        /// <param name="id">The user ID.</param>
+        /// <returns>True if the user was deactivated; otherwise, false.</returns>
+        public async Task<bool> DeactivateUserAsync(int id)
+        {
+            try
+            {
+                var query = @"
+                    UPDATE [Users] 
+                    SET IsActive = 0, UserStatus = 'Inactive', ModifiedDate = @ModifiedDate 
+                    WHERE Id = @Id";
+
+                var parameters = new { Id = id, ModifiedDate = DateTime.UtcNow };
+                var result = await _clientRepository.ExecuteCommandAsync(query, parameters);
+                return result > 0;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error deactivating user: {ex.Message}", ex);
+            }
+        }
 
         /// <summary>
         /// Changes a user's password.
@@ -323,10 +342,8 @@ namespace Pml.Infrastructure.Client
         {
             try
             {
-                var clientRepository = await GetClientRepositoryAsync();
-
                 var query = @"
-                    UPDATE [User] 
+                    UPDATE [Users] 
                     SET Password = @Password, ModifiedDate = @ModifiedDate 
                     WHERE Id = @Id";
 
@@ -337,7 +354,7 @@ namespace Pml.Infrastructure.Client
                     ModifiedDate = DateTime.UtcNow
                 };
 
-                var result = await clientRepository.ExecuteCommandAsync(query, parameters);
+                var result = await _clientRepository.ExecuteCommandAsync(query, parameters);
                 return result > 0;
             }
             catch (Exception ex)
@@ -355,12 +372,10 @@ namespace Pml.Infrastructure.Client
         {
             try
             {
-                var clientRepository = await GetClientRepositoryAsync();
-
-                var query = "SELECT COUNT(1) FROM [User] WHERE UserName = @Username";
+                var query = "SELECT COUNT(1) FROM [Users] WHERE UserName = @Username";
                 var parameters = new { Username = username };
 
-                var result = await clientRepository.ExecuteQueryAsync(query, parameters);
+                var result = await _clientRepository.ExecuteQueryAsync(query, parameters);
                 var count = Convert.ToInt32(result.FirstOrDefault());
                 return count > 0;
             }
@@ -370,8 +385,36 @@ namespace Pml.Infrastructure.Client
             }
         }
 
+        /// <summary>
+        /// Checks if an email already exists.
+        /// </summary>
+        /// <param name="email">The email to check.</param>
+        /// <returns>True if the email exists; otherwise, false.</returns>
+        public async Task<bool> EmailExistsAsync(string email)
+        {
+            try
+            {
+                var query = "SELECT COUNT(1) FROM [Users] WHERE UserEmail = @Email";
+                var parameters = new { Email = email };
+
+                var result = await _clientRepository.ExecuteQueryAsync(query, parameters);
+                var count = Convert.ToInt32(result.FirstOrDefault());
+                return count > 0;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error checking email existence: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Maps dynamic object to User entity.
+        /// </summary>
+        /// <param name="data">Dynamic data from database.</param>
+        /// <returns>User entity.</returns>
         private User MapToUser(dynamic data)
         {
+
             return new User
             {
                 Id = (int)data.Id,
@@ -384,9 +427,9 @@ namespace Pml.Infrastructure.Client
                 UserAddress = data.UserAddress,
                 UserRoleCode = (int)data.UserRoleCode,
                 CompanyId = (int)data.CompanyId,
-                CreatedDate = ConvertToDateTime(data.CreatedDate),
-                ModifiedDate = data.ModifiedDate != null ? ConvertToDateTime(data.ModifiedDate) : (DateTime?)null,
-                IsActive = ConvertToBool(data.IsActive),
+                CreatedDate = data.CreatedDate is DateTime ? data.CreatedDate : DateTime.Parse(data.CreatedDate.ToString()),
+                ModifiedDate = data.ModifiedDate is DateTime ? data.ModifiedDate : (data.ModifiedDate == null ? null : DateTime.Parse(data.ModifiedDate.ToString())),
+                IsActive = data.IsActive is bool b ? b : Convert.ToInt32(data.IsActive) == 1,
                 Role = data.RoleName != null ? new Role
                 {
                     Id = (int)data.UserRoleCode,
@@ -395,34 +438,5 @@ namespace Pml.Infrastructure.Client
                 } : null
             };
         }
-
-        private bool ConvertToBool(object value)
-        {
-            if (value == null || value is DBNull)
-                return false;
-            if (value is bool b)
-                return b;
-            if (value is int i)
-                return i != 0;
-            if (value is long l)
-                return l != 0;
-            if (bool.TryParse(value.ToString(), out var result))
-                return result;
-            if (long.TryParse(value.ToString(), out var l2))
-                return l2 != 0;
-            return false;
-        }
-
-        private DateTime ConvertToDateTime(object value)
-        {
-            if (value == null || value is DBNull)
-                return DateTime.MinValue;
-            if (value is DateTime dt)
-                return dt;
-            if (DateTime.TryParse(value.ToString(), out var result))
-                return result;
-            throw new InvalidCastException($"Cannot convert value '{value}' to DateTime.");
-        }
     }
 }
-

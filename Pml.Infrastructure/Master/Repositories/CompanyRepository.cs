@@ -125,6 +125,25 @@ namespace Pml.Infrastructure.Master.Repositories
             }
         }
 
+        public async Task<IEnumerable<Company>> GetAllActiveCompaniesAsync()
+        {
+            try
+            {
+                using (var connection = new SqliteConnection(_connection.ConnectionString))
+                {
+                    connection.Open();
+                    var query = "SELECT * FROM companies WHERE IsActive = true";
+                    var data = await connection.QueryAsync<Company>(query);
+                    connection.Close();
+                    return data;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error fetching all active companies: {ex.Message}", ex);
+            }
+        }
+
         /// <summary>
         /// Gets the default database for a companies.
         /// </summary>

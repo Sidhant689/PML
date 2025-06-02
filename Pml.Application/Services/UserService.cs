@@ -74,17 +74,17 @@ namespace Pml.Application.Services
             }
         }
 
-        //public async Task<IEnumerable<User>> GetByRoleAsync(int roleId)
-        //{
-        //    try
-        //    {
-        //        //return await _repository.GetByRoleAsync(roleId);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        throw new ApplicationException($"Error fetching users by role ID {roleId}", ex);
-        //    }
-        //}
+        public async Task<IEnumerable<User>> GetByRoleAsync(int roleId)
+        {
+            try
+            {
+                return await _repository.GetByRoleAsync(roleId);
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException($"Error fetching users by role ID {roleId}", ex);
+            }
+        }
 
         public async Task<User> CreateAsync(User user)
         {
@@ -122,29 +122,29 @@ namespace Pml.Application.Services
             }
         }
 
-        //public async Task<bool> ActivateUserAsync(int id)
-        //{
-        //    try
-        //    {
-        //        //return await _repository.ActivateUserAsync(id);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        throw new ApplicationException($"Error activating user with ID {id}", ex);
-        //    }
-        //}
+        public async Task<bool> ActivateUserAsync(int id)
+        {
+            try
+            {
+                return await _repository.ActivateUserAsync(id);
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException($"Error activating user with ID {id}", ex);
+            }
+        }
 
-        //public async Task<bool> DeactivateUserAsync(int id)
-        //{
-        //    try
-        //    {
-        //        //return await _repository.DeactivateUserAsync(id);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        throw new ApplicationException($"Error deactivating user with ID {id}", ex);
-        //    }
-        //}
+        public async Task<bool> DeactivateUserAsync(int id)
+        {
+            try
+            {
+                return await _repository.DeactivateUserAsync(id);
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException($"Error deactivating user with ID {id}", ex);
+            }
+        }
 
         public async Task<bool> ChangePasswordAsync(int userId, string newPasswordHash)
         {
@@ -170,16 +170,16 @@ namespace Pml.Application.Services
             }
         }
 
-        //public async Task<bool> EmailExistsAsync(string email)
-        //{
-        //    try
-        //    {
-        //        return await _repository.EmailExistsAsync(email);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        throw new ApplicationException($"Error checking if email exists: {email}", ex);
-        //    }
-        //}
+        public async Task<bool> EmailExistsAsync(string email)
+        {
+            try
+            {
+                return await _repository.EmailExistsAsync(email);
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException($"Error checking if email exists: {email}", ex);
+            }
+        }
     }
 }

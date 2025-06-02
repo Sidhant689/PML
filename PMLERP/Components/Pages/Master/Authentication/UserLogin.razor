@@ -97,15 +97,15 @@
                                 <i class="bi bi-translate input-icon"></i>
                                 <select id="language"
                                         class="form-control form-select"
-                                        @bind="loginModel.Language">
+                                        @bind="loginModel.LanguageId">
                                     <option value="">Select Language</option>
                                     @foreach (var language in languages)
                                     {
-                                        <option value="@language.Code">@language.Name</option>
+                                        <option value="@language.Id">@language.Name</option>
                                     }
                                 </select>
                             </div>
-                            <ValidationMessage For="@(() => loginModel.Language)" class="validation-message" />
+                            <ValidationMessage For="@(() => loginModel.LanguageId)" class="validation-message" />
                         </div>
                     </div>
 
@@ -158,29 +158,29 @@
 
     private List<CompanyOption> companies = new()
     {
-        new CompanyOption { Id = "1", Name = "Luxury Gems Ltd." },
-        new CompanyOption { Id = "2", Name = "Diamond Palace Inc." },
-        new CompanyOption { Id = "3", Name = "Golden Jewelry Co." },
-        new CompanyOption { Id = "4", Name = "Crystal Craft Ltd." },
-        new CompanyOption { Id = "5", Name = "Precious Stones Corp." }
+        new CompanyOption { Id = 1, Name = "Luxury Gems Ltd." },
+        new CompanyOption { Id = 2, Name = "Diamond Palace Inc." },
+        new CompanyOption { Id = 3, Name = "Golden Jewelry Co." },
+        new CompanyOption { Id = 4, Name = "Crystal Craft Ltd." },
+        new CompanyOption { Id = 5, Name = "Precious Stones Corp." }
     };
 
     private List<LanguageOption> languages = new()
     {
-        new LanguageOption { Code = "en", Name = "English" },
-        new LanguageOption { Code = "es", Name = "Español" },
-        new LanguageOption { Code = "fr", Name = "Français" },
-        new LanguageOption { Code = "de", Name = "Deutsch" },
-        new LanguageOption { Code = "ar", Name = "العربية" },
-        new LanguageOption { Code = "hi", Name = "हिन्दी" },
-        new LanguageOption { Code = "zh", Name = "中文" }
+        new LanguageOption { Id = 1, Code = "en", Name = "English" },
+        new LanguageOption { Id = 2, Code = "es", Name = "Español" },
+        new LanguageOption { Id = 3, Code = "fr", Name = "Français" },
+        new LanguageOption { Id = 4, Code = "de", Name = "Deutsch" },
+        new LanguageOption { Id = 5, Code = "ar", Name = "العربية" },
+        new LanguageOption { Id = 6, Code = "hi", Name = "हिन्दी" },
+        new LanguageOption { Id = 7, Code = "zh", Name = "中文" }
     };
 
     protected override async Task OnInitializedAsync()
     {
         if (await AuthService.IsUserAuthenticatedAsync())
         {
-            NavigationManager.NavigateTo("/dashboard");
+            NavigationManager.NavigateTo("/");
         }
 
         // Load theme preference
@@ -189,34 +189,32 @@
 
     private async Task HandleLogin()
     {
-        // isLoading = true;
-        // try
-        // {
-        //     var result = await AuthService.UserLoginAsync(
-        //         loginModel.Username,
-        //         loginModel.Password,
-        //         loginModel.Passcode,
-        //         loginModel.CompanyId,
-        //         loginModel.Language
-        //     );
+        isLoading = true;
+        try
+        {
+            var result = await AuthService.LoginAsync(
+                loginModel.Username,
+                loginModel.Password,
+                loginModel.Passcode,
+                loginModel.CompanyId,
+                loginModel.LanguageId
+            );
 
-        //     if (result)
-        //     {
-        //         NavigationManager.NavigateTo("/dashboard");
-        //     }
-        //     else
-        //     {
-        //         Snackbar.Add("Invalid credentials or missing information", Severity.Error);
-        //     }
-        // }
-        // catch (Exception ex)
-        // {
-        //     Snackbar.Add($"Error: {ex.Message}", Severity.Error);
-        // }
-        // finally
-        // {
-        //     isLoading = false;
-        // }
+            if (result)
+            {
+                NavigationManager.NavigateTo("/");
+            }
+            else
+            {
+            }
+        }
+        catch (Exception ex)
+        {
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
     private void TogglePasswordVisibility()
@@ -272,20 +270,21 @@
         public string Passcode { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Please select a company")]
-        public string CompanyId { get; set; } = string.Empty;
+        public int CompanyId { get; set; }
 
         [Required(ErrorMessage = "Please select a language")]
-        public string Language { get; set; } = string.Empty;
+        public int LanguageId { get; set; }
     }
 
     public class CompanyOption
     {
-        public string Id { get; set; } = string.Empty;
+        public int Id { get; set; } 
         public string Name { get; set; } = string.Empty;
     }
 
     public class LanguageOption
     {
+		public int Id { get; set; } 
         public string Code { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
     }

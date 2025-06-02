@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Pml.Domain.Authentication;
+using Pml.Shared.Entities.Models.Master;
 using Pml.Shared.Entities.Settings;
 
 namespace Pml.Infrastructure.Authentication
@@ -37,7 +38,7 @@ namespace Pml.Infrastructure.Authentication
         /// <param name="email">The user's email address.</param>
         /// <param name="roles">Optional list of user roles.</param>
         /// <returns>Signed JWT access token as a string.</returns>
-        public string GenerateAccessToken(int userId, string username, string email, IEnumerable<string> roles = null)
+        public string GenerateAccessToken(int userId, string username, string email, IEnumerable<string> roles, int companyId)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_jwtSettings.Secret));
@@ -45,7 +46,10 @@ namespace Pml.Infrastructure.Authentication
                 {
                     new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
                     new Claim(ClaimTypes.Name, username),
-                    new Claim(ClaimTypes.Email, email ?? string.Empty)
+                    new Claim(ClaimTypes.Email, email ?? string.Empty),
+                    new Claim("CompanyId", companyId.ToString()),
+                    //new Claim("companyName", company.Name),
+                    //new Claim("companyCode", company.CompanyCode ?? ""),
                 };
 
             // Add roles to claims if provided

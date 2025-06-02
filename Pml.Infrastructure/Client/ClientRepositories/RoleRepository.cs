@@ -1,45 +1,18 @@
-﻿using System.Runtime.CompilerServices;
-using Microsoft.AspNetCore.Http;
-using Pml.Domain.IRepositories.Client;
-using Pml.Domain.IRepositories.Master;
-using Pml.Infrastructure.Client.Factory;
+﻿using Pml.Domain.IRepositories.Client;
 using Pml.Shared.Entities.Models.Client;
 
-namespace Pml.Infrastructure.Client
+namespace Pml.Infrastructure.Client.ClientRepositories
 {
     public class RoleRepository : IRoleRepository
     {
-        private readonly IClientRepositoryFactory _clientRepositoryFactory;
-        private readonly ICompanyRepository _companyRepository;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IClientRepository _clientRepository;
 
-
-       public RoleRepository(IClientRepositoryFactory clientRepositoryFactory, ICompanyRepository companyRepository, IHttpContextAccessor httpContextAccessor)
+        public RoleRepository(IClientRepository clientRepository)
         {
-            _clientRepositoryFactory = clientRepositoryFactory;
-            _companyRepository = companyRepository;
-            _httpContextAccessor = httpContextAccessor;
+            _clientRepository = clientRepository;
         }
 
-        // Helper method to get the appropriate client repository
-        private async Task<IClientRepository> GetClientRepositoryAsync()
-        {
-            // Get company ID from user claims
-            var companyIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst("CompanyId")?.Value;
-            if (string.IsNullOrEmpty(companyIdClaim) || !int.TryParse(companyIdClaim, out int companyId))
-            {
-                throw new UnauthorizedAccessException("Company ID not found in user claims");
-            }
 
-            // Get company database configuration
-            var companyDatabase = await _companyRepository.GetDefaultDatabaseAsync(companyId);
-            if (companyDatabase == null)
-            {
-                throw new InvalidOperationException($"No database configuration found for company {companyId}");
-            }
-
-            return await _clientRepositoryFactory.CreateClientRepositoryAsync(companyDatabase);
-        }
 
         /// <summary>
         /// Gets a role by its unique identifier.
@@ -50,10 +23,9 @@ namespace Pml.Infrastructure.Client
         {
             try
             {
-                var clientRepository = await GetClientRepositoryAsync();
                 var query = "SELECT * FROM Role WHERE Id = @Id";
                 var parameters = new { Id = id };
-                var result = await clientRepository.ExecuteQueryAsync(query, parameters);
+                var result = await _clientRepository.ExecuteQueryAsync(query, parameters);
                 var roleData = result.FirstOrDefault();
 
                 if (roleData == null)
@@ -75,14 +47,13 @@ namespace Pml.Infrastructure.Client
         {
             try
             {
-                var clientRepository = await GetClientRepositoryAsync();
                 var query = @"
                     SELECT r.* 
                     FROM Role r
                     JOIN [User] u ON u.UserRoleCode = r.Id
                     WHERE u.Id = @UserId AND r.IsActive = 1";
                 var parameters = new { UserId = userId };
-                var result = await clientRepository.ExecuteQueryAsync(query, parameters);
+                var result = await _clientRepository.ExecuteQueryAsync(query, parameters);
                 return (IEnumerable<string>)result.Select(MapToRole);
             }
             catch (Exception ex)
@@ -100,10 +71,9 @@ namespace Pml.Infrastructure.Client
         {
             try
             {
-                var clientRepository = await GetClientRepositoryAsync();
                 var query = "SELECT * FROM Role WHERE RoleName = @RoleName AND IsActive = 1";
                 var parameters = new { RoleName = roleName };
-                var result = await clientRepository.ExecuteQueryAsync(query, parameters);
+                var result = await _clientRepository.ExecuteQueryAsync(query, parameters);
                 var roleData = result.FirstOrDefault();
 
                 if (roleData == null)
@@ -125,9 +95,8 @@ namespace Pml.Infrastructure.Client
         {
             try
             {
-                var clientRepository = await GetClientRepositoryAsync();
                 var query = "SELECT * FROM Role ORDER BY RoleName";
-                var result = await clientRepository.ExecuteQueryAsync(query);
+                var result = await _clientRepository.ExecuteQueryAsync(query);
                 return result.Select(MapToRole);
             }
             catch (Exception ex)
@@ -144,9 +113,8 @@ namespace Pml.Infrastructure.Client
         {
             try
             {
-                var clientRepository = await GetClientRepositoryAsync();
                 var query = "SELECT * FROM Role WHERE IsActive = 1 ORDER BY RoleName";
-                var result = await clientRepository.ExecuteQueryAsync(query);
+                var result = await _clientRepository.ExecuteQueryAsync(query);
                 return result.Select(MapToRole);
             }
             catch (Exception ex)
@@ -164,7 +132,6 @@ namespace Pml.Infrastructure.Client
         {
             try
             {
-                var clientRepository = await GetClientRepositoryAsync();
                 var query = @"
                     INSERT INTO Role (RoleName, RoleDescription, RoleStatus, CreatedDate, IsActive)
                     VALUES (@RoleName, @RoleDescription, @RoleStatus, @CreatedDate, @IsActive);
@@ -179,7 +146,7 @@ namespace Pml.Infrastructure.Client
                     role.IsActive
                 };
 
-                var result = await clientRepository.ExecuteQueryAsync(query, parameters);
+                var result = await _clientRepository.ExecuteQueryAsync(query, parameters);
                 var newId = Convert.ToInt32(result.FirstOrDefault());
 
                 return await GetByIdAsync(newId);
@@ -199,7 +166,6 @@ namespace Pml.Infrastructure.Client
         {
             try
             {
-                var clientRepository = await GetClientRepositoryAsync();
                 var query = @"
                     UPDATE Role 
                     SET RoleName = @RoleName, RoleDescription = @RoleDescription, 
@@ -214,7 +180,7 @@ namespace Pml.Infrastructure.Client
                     role.Id
                 };
 
-                await clientRepository.ExecuteCommandAsync(query, parameters);
+                await _clientRepository.ExecuteCommandAsync(query, parameters);
                 return await GetByIdAsync(role.Id);
             }
             catch (Exception ex)
@@ -232,7 +198,6 @@ namespace Pml.Infrastructure.Client
         {
             try
             {
-                var clientRepository = await GetClientRepositoryAsync();
                 // Check if any users are assigned to this role
                 var userCount = await GetUserCountByRoleAsync(id);
                 if (userCount > 0)
@@ -243,7 +208,7 @@ namespace Pml.Infrastructure.Client
                 var query = "UPDATE Role SET IsActive = 0 WHERE Id = @Id";
                 var parameters = new { Id = id };
 
-                var result = await clientRepository.ExecuteCommandAsync(query, parameters);
+                var result = await _clientRepository.ExecuteCommandAsync(query, parameters);
                 return result > 0;
             }
             catch (Exception ex)
@@ -261,10 +226,9 @@ namespace Pml.Infrastructure.Client
         {
             try
             {
-                var clientRepository = await GetClientRepositoryAsync();
                 var query = "UPDATE Role SET IsActive = 1, RoleStatus = 'Active' WHERE Id = @Id";
                 var parameters = new { Id = id };
-                var result = await clientRepository.ExecuteCommandAsync(query, parameters);
+                var result = await _clientRepository.ExecuteCommandAsync(query, parameters);
                 return result > 0;
             }
             catch (Exception ex)
@@ -282,10 +246,9 @@ namespace Pml.Infrastructure.Client
         {
             try
             {
-                var clientRepository = await GetClientRepositoryAsync();
                 var query = "UPDATE Role SET IsActive = 0, RoleStatus = 'Inactive' WHERE Id = @Id";
                 var parameters = new { Id = id };
-                var result = await clientRepository.ExecuteCommandAsync(query, parameters);
+                var result = await _clientRepository.ExecuteCommandAsync(query, parameters);
                 return result > 0;
             }
             catch (Exception ex)
@@ -303,11 +266,10 @@ namespace Pml.Infrastructure.Client
         {
             try
             {
-                var clientRepository = await GetClientRepositoryAsync();
                 var query = "SELECT COUNT(1) FROM Role WHERE RoleName = @RoleName";
                 var parameters = new { RoleName = roleName };
 
-                var result = await clientRepository.ExecuteQueryAsync(query, parameters);
+                var result = await _clientRepository.ExecuteQueryAsync(query, parameters);
                 var count = Convert.ToInt32(result.FirstOrDefault());
                 return count > 0;
             }
@@ -326,11 +288,10 @@ namespace Pml.Infrastructure.Client
         {
             try
             {
-                var clientRepository = await GetClientRepositoryAsync();
                 var query = "SELECT COUNT(1) FROM [User] WHERE UserRoleCode = @RoleId AND IsActive = 1";
                 var parameters = new { RoleId = roleId };
 
-                var result = await clientRepository.ExecuteQueryAsync(query, parameters);
+                var result = await _clientRepository.ExecuteQueryAsync(query, parameters);
                 return Convert.ToInt32(result.FirstOrDefault());
             }
             catch (Exception ex)

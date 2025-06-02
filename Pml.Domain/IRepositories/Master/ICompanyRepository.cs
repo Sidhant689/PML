@@ -13,6 +13,7 @@ namespace Pml.Domain.IRepositories.Master
         Task<Company> GetByCodeAsync(string code);
         Task<IEnumerable<Company>> GetAllAsync();
         Task<IEnumerable<CompanyDatabase>> GetCompanyDatabasesAsync(int companyId);
+        Task<IEnumerable<Company>> GetAllActiveCompaniesAsync();
         Task<CompanyDatabase> GetDefaultDatabaseAsync(int companyId);
         Task<Company> CreateCompanyAsync(Company company);
         Task<Company> UpdateCompanyAsync(Company company);

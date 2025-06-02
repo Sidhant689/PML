@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using BCrypt.Net;
-using Pml.Shared.DTOs.Master.Authentication;
 using Pml.Application.IServices;
 using Pml.Domain.Authentication;
 using Pml.Domain.IRepositories.Master;
@@ -12,6 +11,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Identity.Data;
 using Pml.Shared.DTOs.Client;
 using Pml.Domain.IRepositories.Client;
+using Pml.Infrastructure.Client.ClientRepositories;
+using Pml.Infrastructure.Client;
+using Pml.Shared.Entities.Models.Client;
 
 namespace Pml.Application.Services
 {
@@ -21,22 +23,26 @@ namespace Pml.Application.Services
     public class AuthService : IAuthService
     {
         private readonly ITokenRepository _tokenRepository;
-        private readonly IUserRepository _userRepositiry;
-        private readonly IRoleRepository _roleRepository;
+        private readonly ICompanyRepository _companyRepository;
+        private readonly IClientRepositoryProvider _clientRepositoryProvider;
         private readonly ILogger<AuthService> _logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AuthService"/> class.
         /// </summary>
         /// <param name="tokenRepository">Token repository for generating and validating tokens.</param>
-        /// <param name="systemAdminRepository">Repository for system admin users.</param>
-        /// <param name="systemAdminRoleRepository">Repository for system admin roles.</param>
+        /// <param name="companyRepository">Repository for company operations.</param>
+        /// <param name="clientRepositoryProvider">Provider for client-specific repositories.</param>
         /// <param name="logger">Logger instance.</param>
         public AuthService(
             ITokenRepository tokenRepository,
+            ICompanyRepository companyRepository,
+            IClientRepositoryProvider clientRepositoryProvider,
             ILogger<AuthService> logger)
         {
             _tokenRepository = tokenRepository;
+            _companyRepository = companyRepository;
+            _clientRepositoryProvider = clientRepositoryProvider;
             _logger = logger;
         }
 
@@ -47,59 +53,91 @@ namespace Pml.Application.Services
         /// <returns>Authentication response with tokens and user info.</returns>
         public async Task<AuthResponse> LoginAsync(AuthRequest request)
         {
-            // Validate credentials
-            var user = await _userRepositiry.GetByUsernameAsync(request.UserName);
-
-            if (user == null)
+            try
             {
-                _logger.LogWarning("Login attempt with invalid username: {Username}", request.UserName);
+                // Step 1: Find user across all company databases or in a specific company
+                var (user, companyId) = await FindUserAsync(request.UserName, request.CompanyId);
+
+                if (user == null)
+                {
+                    _logger.LogWarning("Login attempt with invalid username: {Username}", request.UserName);
+                    return new AuthResponse
+                    {
+                        IsSuccess = false,
+                        Message = "Invalid username or password"
+                    };
+                }
+
+                // Step 2: Verify password
+                if (!VerifyPasswordHash(request.Password, user.Password))
+                {
+                    _logger.LogWarning("Login attempt with invalid password for user: {Username}", request.UserName);
+                    return new AuthResponse
+                    {
+                        IsSuccess = false,
+                        Message = "Invalid username or password"
+                    };
+                }
+
+                // Step 3: Check if user is active
+                if (!user.IsActive || user.UserStatus != "Active")
+                {
+                    _logger.LogWarning("Login attempt for inactive user: {Username}", request.UserName);
+                    return new AuthResponse
+                    {
+                        IsSuccess = false,
+                        Message = "User account is not active"
+                    };
+                }
+
+                // Step 4: Get user roles
+                var roles = new List<string>();
+                if (user.Role != null)
+                {
+                    roles.Add(user.Role.RoleName);
+                }
+
+                // Step 5: Log authentication success
+                _logger.LogInformation("User {Username} from company {CompanyId} authenticated successfully",
+                    user.UserName, companyId);
+
+                // Step 6: Generate access and refresh tokens
+                var accessToken = _tokenRepository.GenerateAccessToken(
+                    user.Id,
+                    user.UserName,
+                    user.UserEmail,
+                    roles,
+                    companyId); // Include company ID in token
+
+                var refreshToken = _tokenRepository.GenerateRefreshToken();
+                var refreshTokenExpiry = _tokenRepository.CalculateRefreshTokenExpiry();
+
+                // Step 7: Update refresh token in user's company database
+                await UpdateUserRefreshTokenAsync(user.Id, companyId, refreshToken, refreshTokenExpiry);
+
+                // Step 8: Return authentication response
+                return new AuthResponse
+                {
+                    IsSuccess = true,
+                    Message = "Authentication successful",
+                    AccessToken = accessToken,
+                    RefreshToken = refreshToken,
+                    RefreshTokenExpiry = refreshTokenExpiry,
+                    UserId = user.Id,
+                    Username = user.UserName,
+                    Email = user.UserEmail,
+                    Roles = roles
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Login failed for username: {Username}", request.UserName);
                 return new AuthResponse
                 {
                     IsSuccess = false,
-                    Message = "Invalid username or password"
+                    Message = "Authentication failed due to an internal error"
                 };
             }
-
-            // Verify password
-            if (!VerifyPasswordHash(request.Password, user.Password))
-            {
-                _logger.LogWarning("Login attempt with invalid password for user: {Username}", request.UserName);
-                return new AuthResponse
-                {
-                    IsSuccess = false,
-                    Message = "Invalid username or password"
-                };
-            }
-
-            // Get roles for the authenticated user
-            var roles = await _roleRepository.GetRolesByUserIdAsync(user.Id);
-
-            // Log authentication success (avoid logging sensitive details in production)
-            _logger.LogInformation("User {Username} authenticated successfully", user.UserName);
-
-            // Generate access and refresh tokens
-            var accessToken = _tokenRepository.GenerateAccessToken(user.Id, user.UserName, user.UserEmail, roles);
-            var refreshToken = _tokenRepository.GenerateRefreshToken();
-            var refreshTokenExpiry = _tokenRepository.CalculateRefreshTokenExpiry();
-
-            // Update refresh token in database
-            user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiry = refreshTokenExpiry;
-            await _userRepositiry.UpdateAsync(user);
-
-            // Return authentication response
-            return new AuthResponse
-            {
-                IsSuccess = true,
-                Message = "Authentication successful",
-                AccessToken = accessToken,
-                RefreshToken = refreshToken,
-                RefreshTokenExpiry = refreshTokenExpiry,
-                UserId = user.Id,
-                Username = user.UserName,
-                Email = user.UserEmail,
-                Roles = roles
-            };
         }
 
         /// <summary>
@@ -111,22 +149,32 @@ namespace Pml.Application.Services
         {
             try
             {
-                // Get principal from expired access token
+                // Step 1: Get principal from expired access token
                 var principal = _tokenRepository.GetPrincipalFromExpiredToken(request.AccessToken);
                 var username = principal.Identity.Name;
+                var companyIdClaim = principal.FindFirst("CompanyId")?.Value;
 
-                // Get user by username
-                var user = await _userRepositiry.GetByUsernameAsync(username);
+                if (string.IsNullOrEmpty(companyIdClaim) || !int.TryParse(companyIdClaim, out int companyId))
+                {
+                    return new AuthResponse
+                    {
+                        IsSuccess = false,
+                        Message = "Invalid token - company information missing"
+                    };
+                }
+
+                // Step 2: Get user from the specific company database
+                var user = await GetUserFromCompanyAsync(username, companyId);
                 if (user == null)
                 {
                     return new AuthResponse
                     {
                         IsSuccess = false,
-                        Message = "Invalid token"
+                        Message = "Invalid token - user not found"
                     };
                 }
 
-                // Validate refresh token and its expiry
+                // Step 3: Validate refresh token and its expiry
                 if (user.RefreshToken != request.RefreshToken ||
                     user.RefreshTokenExpiry <= DateTime.UtcNow)
                 {
@@ -137,20 +185,28 @@ namespace Pml.Application.Services
                     };
                 }
 
-                // Get current roles for the user
-                var roles = await _roleRepository.GetRolesByUserIdAsync(user.Id);
+                // Step 4: Get current roles for the user
+                var roles = new List<string>();
+                if (user.Role != null)
+                {
+                    roles.Add(user.Role.RoleName);
+                }
 
-                // Generate new access and refresh tokens
-                var newAccessToken = _tokenRepository.GenerateAccessToken(user.Id, user.UserName, user.UserEmail, roles);
+                // Step 5: Generate new access and refresh tokens
+                var newAccessToken = _tokenRepository.GenerateAccessToken(
+                    user.Id,
+                    user.UserName,
+                    user.UserEmail,
+                    roles,
+                    companyId);
+
                 var newRefreshToken = _tokenRepository.GenerateRefreshToken();
                 var refreshTokenExpiry = _tokenRepository.CalculateRefreshTokenExpiry();
 
-                // Update refresh token in database
-                user.RefreshToken = newRefreshToken;
-                user.RefreshTokenExpiry = refreshTokenExpiry;
-                await _userRepositiry.UpdateAsync(user);
+                // Step 6: Update refresh token in database
+                await UpdateUserRefreshTokenAsync(user.Id, companyId, newRefreshToken, refreshTokenExpiry);
 
-                // Return authentication response
+                // Step 7: Return authentication response
                 return new AuthResponse
                 {
                     IsSuccess = true,
@@ -161,12 +217,12 @@ namespace Pml.Application.Services
                     UserId = user.Id,
                     Username = user.UserName,
                     Email = user.UserEmail,
-                    Roles = roles // Include roles in response
+                    Roles = roles
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Token refresh failed for user");
+                _logger.LogError(ex, "Token refresh failed");
                 return new AuthResponse
                 {
                     IsSuccess = false,
@@ -179,22 +235,135 @@ namespace Pml.Application.Services
         /// Revokes the refresh token for a user, effectively logging them out.
         /// </summary>
         /// <param name="username">Username of the user whose token is to be revoked.</param>
+        /// <param name="companyId">Company ID where the user belongs.</param>
         /// <returns>True if token was revoked, otherwise false.</returns>
-        public async Task<bool> RevokeTokenAsync(string username)
+        public async Task<bool> RevokeTokenAsync(string username, int companyId)
         {
-            var user = await _userRepositiry.GetByUsernameAsync(username);
-            if (user == null)
+            try
             {
+                var user = await GetUserFromCompanyAsync(username, companyId);
+                if (user == null)
+                {
+                    return false;
+                }
+
+                // Revoke refresh token by clearing it and setting expiry to past date
+                await UpdateUserRefreshTokenAsync(user.Id, companyId, null, DateTime.UtcNow);
+
+                _logger.LogInformation("Token revoked for user: {Username} in company: {CompanyId}",
+                    username, companyId);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to revoke token for user: {Username}", username);
                 return false;
             }
+        }
 
-            // Revoke refresh token by clearing it and setting expiry to now
-            user.RefreshToken = null;
-            user.RefreshTokenExpiry = DateTime.UtcNow; // Set to past date
-            await _userRepositiry.UpdateAsync(user);
+        /// <summary>
+        /// Finds a user by username, either in a specific company or across all companies.
+        /// </summary>
+        /// <param name="username">Username to search for.</param>
+        /// <param name="companyId">Optional company ID to search in specific company.</param>
+        /// <returns>Tuple containing the user and company ID where found.</returns>
+        private async Task<(User user, int companyId)> FindUserAsync(string username, int? companyId = null)
+        {
+            if (companyId.HasValue)
+            {
+                // Search in specific company
+                var user = await GetUserFromCompanyAsync(username, companyId.Value);
+                return (user, companyId.Value);
+            }
+            else
+            {
+                // Search across all companies (this might be expensive - consider optimization)
+                var companies = await _companyRepository.GetAllActiveCompaniesAsync();
 
-            _logger.LogInformation("Token revoked for user: {Username}", username);
-            return true;
+                foreach (var company in companies)
+                {
+                    var user = await GetUserFromCompanyAsync(username, company.Id);
+                    if (user != null)
+                    {
+                        return (user, company.Id);
+                    }
+                }
+
+                return (null, 0);
+            }
+        }
+
+        /// <summary>
+        /// Gets a user from a specific company's database.
+        /// </summary>
+        /// <param name="username">Username to search for.</param>
+        /// <param name="companyId">Company ID.</param>
+        /// <returns>User entity or null if not found.</returns>
+        private async Task<User> GetUserFromCompanyAsync(string username, int companyId)
+        {
+            try
+            {
+                // Get company database configuration
+                var companyDatabase = await _companyRepository.GetDefaultDatabaseAsync(companyId);
+                if (companyDatabase == null)
+                {
+                    return null;
+                }
+
+                // Create client repository for this company
+                var clientRepository = await _clientRepositoryProvider
+                    .GetRepositoryForCompanyAsync(companyId);
+
+                // Create user repository and get user
+                var userRepository = new UserRepository(clientRepository);
+                return await userRepository.GetByUsernameAsync(username);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting user {Username} from company {CompanyId}",
+                    username, companyId);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Updates user's refresh token in the company database.
+        /// </summary>
+        /// <param name="userId">User ID.</param>
+        /// <param name="companyId">Company ID.</param>
+        /// <param name="refreshToken">New refresh token.</param>
+        /// <param name="expiry">Token expiry date.</param>
+        private async Task UpdateUserRefreshTokenAsync(int userId, int companyId,
+            string refreshToken, DateTime expiry)
+        {
+            try
+            {
+                var clientRepository = await _clientRepositoryProvider
+                    .GetRepositoryForCompanyAsync(companyId);
+
+                var query = @"
+                    UPDATE [Users] 
+                    SET RefreshToken = @RefreshToken, 
+                        RefreshTokenExpiry = @RefreshTokenExpiry,
+                        ModifiedDate = @ModifiedDate
+                    WHERE Id = @UserId";
+
+                var parameters = new
+                {
+                    RefreshToken = refreshToken,
+                    RefreshTokenExpiry = expiry,
+                    ModifiedDate = DateTime.UtcNow,
+                    UserId = userId
+                };
+
+                await clientRepository.ExecuteCommandAsync(query, parameters);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating refresh token for user {UserId} in company {CompanyId}",
+                    userId, companyId);
+                throw;
+            }
         }
 
         /// <summary>

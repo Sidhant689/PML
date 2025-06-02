@@ -7,7 +7,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components.Authorization;
 using Pml.Shared.DTOs.Client;
-using Pml.Shared.DTOs.Master.Authentication;
 using PMLERP.Helpers;
 using PMLERP.IServices.Master;
 
@@ -29,12 +28,12 @@ namespace PMLERP.Services.Master
             _authStateProvider = authStateProvider;
         }
 
-        public async Task<bool> LoginAsync(string username, string password)
+        public async Task<bool> LoginAsync(string username, string password, string Passcode, int CompanyId, int LanguageId)
         {
             try
             {
-                var loginModel = new AuthRequest { UserName = username, Password = password };
-                var response = await _httpClient.PostAsJsonAsync("SystemAdminAuth/login", loginModel);
+                var loginModel = new AuthRequest { UserName = username, Password = password, Passcode = Passcode, CompanyId = CompanyId, LanguageId = LanguageId};
+                var response = await _httpClient.PostAsJsonAsync("Auth/login", loginModel);
 
                 if (!response.IsSuccessStatusCode)
                     return false;
@@ -105,7 +104,7 @@ namespace PMLERP.Services.Master
 
                 // Validate token with server
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                var response = await _httpClient.GetAsync("SystemAdminAuth/validate");
+                var response = await _httpClient.GetAsync("Auth/validate");
 
                 if (!response.IsSuccessStatusCode)
                 {

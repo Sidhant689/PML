@@ -15,6 +15,7 @@ using Pml.Domain.IRepositories.Master;
 using Pml.Infrastructure.Authentication;
 using Pml.Infrastructure.Client;
 using Pml.Infrastructure.Client.Factory;
+using Pml.Infrastructure.Client.ClientRepositories;
 using Pml.Infrastructure.Master;
 using Pml.Infrastructure.Master.Repositories;
 using Pml.Shared.Entities.Settings;
@@ -44,6 +45,12 @@ namespace Pml.Application.Extensions
 
             // Add the ClientRepositoryFactory
             services.AddScoped<IClientRepositoryFactory, ClientRepositoryFactory>();
+
+            // Register the repository provider
+            services.AddScoped<IClientRepositoryProvider, ClientRepositoryProvider>();
+
+            // Register the dynamic client repository wrapper
+            services.AddScoped<IClientRepository, DynamicClientRepository>();
 
             // Register Repositories
             services.AddScoped<ICompanyRepository, CompanyRepository>();

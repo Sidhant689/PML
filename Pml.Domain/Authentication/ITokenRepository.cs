@@ -9,7 +9,7 @@ namespace Pml.Domain.Authentication
 {
     public interface ITokenRepository
     {
-        string GenerateAccessToken(int userId, string username, string email, IEnumerable<string> roles = null);
+        string GenerateAccessToken(int userId, string username, string email, IEnumerable<string> roles, int companyId);
         string GenerateRefreshToken();
         DateTime CalculateRefreshTokenExpiry();
         ClaimsPrincipal GetPrincipalFromExpiredToken(string token);
