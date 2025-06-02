@@ -1,0 +1,266 @@
+﻿@page "/master/number_pattern"
+
+@* PatternConfigDemo.razor *@
+<div class="container p-4">
+    <h2 class="mb-4">Pattern Configuration Demo</h2>
+
+    <!-- Pattern Information -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5>Pattern Information</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <label>Pattern Code (max 20)</label>
+                    <input type="text" class="form-control" value="V" maxlength="20">
+                </div>
+                <div class="col-md-4">
+                    <label>Description</label>
+                    <input type="text" class="form-control" value="Sales Account Pattern">
+                </div>
+                <div class="col-md-4">
+                    <label>Type</label>
+                    <select class="form-control">
+                        <option selected>Account</option>
+                        <option>Stock</option>
+                        <option>Transaction</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Numbering System -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5>Numbering System Configuration</h5>
+        </div>
+        <div class="card-body">
+            <!-- Automatic but Changeable -->
+            <div class="form-group mb-4">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="numberingType" id="autoChangeable" checked>
+                    <label class="form-check-label font-weight-bold" for="autoChangeable">
+                        Automatic but Changeable
+                    </label>
+
+                    <div class="ml-4 mt-2">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" checked>
+                            <label class="form-check-label">Prefix</label>
+                            <input type="text" class="form-control form-control-sm d-inline-block w-auto ml-2"
+                                   value="sal" style="width: 100px;">
+                        </div>
+
+                        <div class="form-group row align-items-center">
+                            <label class="col-sm-3 col-form-label col-form-label-sm">Reset On:</label>
+                            <div class="col-sm-9">
+                                <select class="form-control form-control-sm">
+                                    <option selected>Month-Year</option>
+                                    <option>Year</option>
+                                    <option>Daily</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manual -->
+            <div class="form-group">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="numberingType" id="manual">
+                    <label class="form-check-label font-weight-bold" for="manual">
+                        Manual
+                    </label>
+
+                    <div class="ml-4 mt-2">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox">
+                            <label class="form-check-label">Suffix</label>
+                            <input type="text" class="form-control form-control-sm d-inline-block w-auto ml-2"
+                                   style="width: 100px;">
+                        </div>
+
+                        <div class="form-group row align-items-center">
+                            <label class="col-sm-3 col-form-label col-form-label-sm">Reset On:</label>
+                            <div class="col-sm-9">
+                                <select class="form-control form-control-sm">
+                                    <option>Month-Year</option>
+                                    <option selected>Year</option>
+                                    <option>Daily</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
+            <!-- Additional Options -->
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox">
+                        <label class="form-check-label">First Character from Description</label>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox">
+                        <label class="form-check-label">Number Skipping By</label>
+                        <input type="number" class="form-control form-control-sm d-inline-block w-auto ml-2"
+                               value="10" style="width: 80px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Configuration Table -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5>Reset Options Reference</h5>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-bordered table-sm mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th>Reset Trigger</th>
+                        <th>Format</th>
+                        <th>Handling</th>
+                        <th>Example</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Month-Year</td>
+                        <td>yyMM</td>
+                        <td>Reset each month</td>
+                        <td>0525 (May 2025)</td>
+                    </tr>
+                    <tr>
+                        <td>Year</td>
+                        <td>yy</td>
+                        <td>Reset on year change</td>
+                        <td>25 (2025)</td>
+                    </tr>
+                    <tr>
+                        <td>Daily</td>
+                        <td>yyyyMMdd</td>
+                        <td>Reset every day</td>
+                        <td>20240525</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Generated Code Preview -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5>Generated Code Preview</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info mb-0">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>Example Output:</strong> sal052500001
+                        <div class="text-muted small mt-1">
+                            [Prefix] + [Date] + [Sequence] = sal + 0525 + 00001
+                        </div>
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary">
+                        Generate Example
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deactivation -->
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox">
+        <label class="form-check-label text-danger">Deactivate Pattern</label>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="mt-4 d-flex justify-content-end">
+        <button class="btn btn-secondary mr-2">Cancel</button>
+        <button class="btn btn-primary">Save Pattern</button>
+    </div>
+</div>
+
+@code {
+    // 1. State Management
+    // private PatternConfig config = new();
+
+    // 2. Model Class
+    // public class PatternConfig
+    // {
+    //     public string PatternCode { get; set; } = "V";
+    //     public string Description { get; set; } = "";
+    //     public string Details { get; set; } = "";
+    //     public string Type { get; set; } = "Account";
+
+    //     Numbering Configuration
+    //     public string NumberingType { get; set; } = "AutomaticChangeable";
+    //     public bool UsePrefix { get; set; } = true;
+    //     public string Prefix { get; set; } = "sal";
+    //     public bool UseSuffix { get; set; }
+    //     public string Suffix { get; set; } = "";
+    //     public bool UseFirstChar { get; set; }
+    //     public int SkipValue { get; set; } = 10;
+    //     public string ResetOn { get; set; } = "Month-Year";
+    //     public bool Deactivated { get; set; }
+    // }
+
+    // 3. Reset Options Data
+    // public List<ResetOption> ResetOptions { get; } = new()
+    // {
+    //     new ResetOption("Month-Year", "yyMM", "Reset Each Month"),
+    //     new ResetOption("Year", "yy", "Reset on year change"),
+    //     new ResetOption("Daily", "yyyyMMdd", "Reset Every Day")
+    // };
+
+    // public record ResetOption(string Trigger, string Format, string Description);
+
+    // 4. Code Generation Logic
+    // private string GenerateExampleCode()
+    // {
+    //     var datePart = DateTime.Now.ToString(
+    //         ResetOptions.FirstOrDefault(r => r.Trigger == config.ResetOn)?.Format ?? "yyMM"
+    //     );
+
+    //     var prefix = config.UsePrefix ? config.Prefix : "";
+    //     var sequence = "00001"; Would come from DB in real implementation
+
+    //     return $"{prefix}{datePart}{sequence}";
+    // }
+
+    // 5. Save Handler
+    // private async Task HandleSave()
+    // {
+    //     Validate constraints
+    //     if (config.Type == "MM")
+    //     {
+    //         Show error: "MM notallowed"
+    //         return;
+    //     }
+
+    //     Save to database
+    //     await DbService.SavePatternConfig(config);
+
+    //     Reset tracking for new pattern
+    //     await ResetNumberTracker();
+    // }
+
+    // 6. Reset Logic (would interact with database)
+    // private async Task ResetNumberTracker()
+    // {
+    //     Logic to flag/reset last used number
+    // }
+}
