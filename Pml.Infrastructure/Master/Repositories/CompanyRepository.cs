@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Dapper;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.Sqlite;
 using Pml.Domain.IRepositories.Master;
 using Pml.Shared.Entities.Models.Master;
 
@@ -16,32 +17,32 @@ namespace Pml.Infrastructure.Master.Repositories
     public class CompanyRepository : ICompanyRepository
     {
         private readonly MasterDbContext _context;
-        private readonly SqlConnection _connection;
+        private readonly SqliteConnection _connection;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CompanyRepository"/> class.
         /// </summary>
         /// <param name="context">The master database context.</param>
         /// <param name="connection">The PostgreSQL connection.</param>
-        public CompanyRepository(MasterDbContext context, SqlConnection connection)
+        public CompanyRepository(MasterDbContext context, SqliteConnection connection)
         {
             _context = context;
             _connection = connection;
         }
 
         /// <summary>
-        /// Gets a company by its unique identifier.
+        /// Gets a companies by its unique identifier.
         /// </summary>
-        /// <param name="id">The company ID.</param>
-        /// <returns>The company entity or null if not found.</returns>
+        /// <param name="id">The companies ID.</param>
+        /// <returns>The companies entity or null if not found.</returns>
         public async Task<Company> GetByIdAsync(int id)
         {
             try
             {
-                using (var connection = new SqlConnection(_connection.ConnectionString))
+                using (var connection = new SqliteConnection(_connection.ConnectionString))
                 {
                     connection.Open();
-                    var query = "SELECT * FROM company WHERE Id = @Id";
+                    var query = "SELECT * FROM companies WHERE Id = @Id";
                     var data = await connection.QueryFirstOrDefaultAsync<Company>(query, new { Id = id });
                     connection.Close();
                     return data;
@@ -49,23 +50,23 @@ namespace Pml.Infrastructure.Master.Repositories
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error fetching company by ID: {ex.Message}", ex);
+                throw new Exception($"Error fetching companies by ID: {ex.Message}", ex);
             }
         }
 
         /// <summary>
-        /// Gets a company by its unique code.
+        /// Gets a companies by its unique code.
         /// </summary>
-        /// <param name="code">The company code.</param>
-        /// <returns>The company entity or null if not found.</returns>
+        /// <param name="code">The companies code.</param>
+        /// <returns>The companies entity or null if not found.</returns>
         public async Task<Company> GetByCodeAsync(string code)
         {
             try
             {
-                using (var connection = new SqlConnection(_connection.ConnectionString))
+                using (var connection = new SqliteConnection(_connection.ConnectionString))
                 {
                     connection.Open();
-                    var query = "SELECT * FROM company WHERE Code = @Code";
+                    var query = "SELECT * FROM companies WHERE Code = @Code";
                     var data = await connection.QueryFirstOrDefaultAsync<Company>(query, new { Code = code });
                     connection.Close();
                     return data;
@@ -73,7 +74,7 @@ namespace Pml.Infrastructure.Master.Repositories
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error fetching company by code: {ex.Message}", ex);
+                throw new Exception($"Error fetching companies by code: {ex.Message}", ex);
             }
         }
 
@@ -85,10 +86,10 @@ namespace Pml.Infrastructure.Master.Repositories
         {
             try
             {
-                using (var connection = new SqlConnection(_connection.ConnectionString))
+                using (var connection = new SqliteConnection(_connection.ConnectionString))
                 {
                     connection.Open();
-                    var query = "SELECT * FROM company";
+                    var query = "SELECT * FROM Companies";
                     var data = await connection.QueryAsync<Company>(query);
                     connection.Close();
                     return data;
@@ -101,15 +102,15 @@ namespace Pml.Infrastructure.Master.Repositories
         }
 
         /// <summary>
-        /// Gets all databases associated with a company.
+        /// Gets all databases associated with a companies.
         /// </summary>
-        /// <param name="companyId">The company ID.</param>
-        /// <returns>A collection of company databases.</returns>
+        /// <param name="companyId">The companies ID.</param>
+        /// <returns>A collection of companies databases.</returns>
         public async Task<IEnumerable<CompanyDatabase>> GetCompanyDatabasesAsync(int companyId)
         {
             try
             {
-                using (var connection = new SqlConnection(_connection.ConnectionString))
+                using (var connection = new SqliteConnection(_connection.ConnectionString))
                 {
                     connection.Open();
                     var query = "SELECT * FROM companydatabase WHERE CompanyId = @CompanyId";
@@ -120,23 +121,23 @@ namespace Pml.Infrastructure.Master.Repositories
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error fetching databases for company ID {companyId}: {ex.Message}", ex);
+                throw new Exception($"Error fetching databases for companies ID {companyId}: {ex.Message}", ex);
             }
         }
 
         /// <summary>
-        /// Gets the default database for a company.
+        /// Gets the default database for a companies.
         /// </summary>
-        /// <param name="companyId">The company ID.</param>
-        /// <returns>The default company database or null if not found.</returns>
+        /// <param name="companyId">The companies ID.</param>
+        /// <returns>The default companies database or null if not found.</returns>
         public async Task<CompanyDatabase> GetDefaultDatabaseAsync(int companyId)
         {
             try
             {
-                using (var connection = new SqlConnection(_connection.ConnectionString))
+                using (var connection = new SqliteConnection(_connection.ConnectionString))
                 {
                     connection.Open();
-                    var query = "SELECT * FROM companydatabase WHERE CompanyId = @CompanyId AND IsDefault = true";
+                    var query = "SELECT * FROM companydatabases WHERE CompanyId = @CompanyId AND IsDefault = true";
                     var data = await connection.QueryFirstOrDefaultAsync<CompanyDatabase>(query, new { CompanyId = companyId });
                     connection.Close();
                     return data;
@@ -144,75 +145,75 @@ namespace Pml.Infrastructure.Master.Repositories
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error fetching default database for company ID {companyId}: {ex.Message}", ex);
+                throw new Exception($"Error fetching default database for companies ID {companyId}: {ex.Message}", ex);
             }
         }
 
         /// <summary>
-        /// Creates a new company.
+        /// Creates a new companies.
         /// </summary>
-        /// <param name="company">The company entity to create.</param>
-        /// <returns>The created company entity.</returns>
-        public async Task<Company> CreateCompanyAsync(Company company)
+        /// <param name="companies">The companies entity to create.</param>
+        /// <returns>The created companies entity.</returns>
+        public async Task<Company> CreateCompanyAsync(Company companies)
         {
             try
             {
-                using (var connection = new SqlConnection(_connection.ConnectionString))
+                using (var connection = new SqliteConnection(_connection.ConnectionString))
                 {
                     connection.Open();
-                    var query = "INSERT INTO company (Name, Address, Phone, Email, Website, Logo, TaxId, RegistrationNumber) " +
+                    var query = "INSERT INTO companies (Name, Address, Phone, Email, Website, Logo, TaxId, RegistrationNumber) " +
                                 "VALUES (@Name, @Address, @Phone, @Email, @Website, @Logo, @TaxId, @RegistrationNumber) " +
                                 "RETURNING *";
-                    var data = await connection.QueryFirstOrDefaultAsync<Company>(query, company);
+                    var data = await connection.QueryFirstOrDefaultAsync<Company>(query, companies);
                     connection.Close();
                     return data;
                 }
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error creating company: {ex.Message}", ex);
+                throw new Exception($"Error creating companies: {ex.Message}", ex);
             }
         }
 
         /// <summary>
-        /// Updates an existing company.
+        /// Updates an existing companies.
         /// </summary>
-        /// <param name="company">The company entity to update.</param>
-        /// <returns>The updated company entity.</returns>
-        public async Task<Company> UpdateCompanyAsync(Company company)
+        /// <param name="companies">The companies entity to update.</param>
+        /// <returns>The updated companies entity.</returns>
+        public async Task<Company> UpdateCompanyAsync(Company companies)
         {
             try
             {
-                using (var connection = new SqlConnection(_connection.ConnectionString))
+                using (var connection = new SqliteConnection(_connection.ConnectionString))
                 {
                     connection.Open();
-                    var query = "UPDATE company SET Name = @Name, Address = @Address, Phone = @Phone, Email = @Email, " +
+                    var query = "UPDATE companies SET Name = @Name, Address = @Address, Phone = @Phone, Email = @Email, " +
                                 "Website = @Website, Logo = @Logo, TaxId = @TaxId, RegistrationNumber = @RegistrationNumber " +
                                 "WHERE Id = @Id RETURNING *";
-                    var data = await connection.QueryFirstOrDefaultAsync<Company>(query, company);
+                    var data = await connection.QueryFirstOrDefaultAsync<Company>(query, companies);
                     connection.Close();
                     return data;
                 }
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error updating company: {ex.Message}", ex);
+                throw new Exception($"Error updating companies: {ex.Message}", ex);
             }
         }
 
         /// <summary>
-        /// Deletes a company by its ID.
+        /// Deletes a companies by its ID.
         /// </summary>
-        /// <param name="id">The company ID.</param>
-        /// <returns>True if the company was deleted; otherwise, false.</returns>
+        /// <param name="id">The companies ID.</param>
+        /// <returns>True if the companies was deleted; otherwise, false.</returns>
         public async Task<bool> DeleteCompanyAsync(int id)
         {
             try
             {
-                using (var connection = new SqlConnection(_connection.ConnectionString))
+                using (var connection = new SqliteConnection(_connection.ConnectionString))
                 {
                     connection.Open();
-                    var query = "DELETE FROM company WHERE Id = @Id";
+                    var query = "DELETE FROM companies WHERE Id = @Id";
                     var result = await connection.ExecuteAsync(query, new { Id = id });
                     connection.Close();
                     return result > 0;
@@ -220,20 +221,20 @@ namespace Pml.Infrastructure.Master.Repositories
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error deleting company: {ex.Message}", ex);
+                throw new Exception($"Error deleting companies: {ex.Message}", ex);
             }
         }
 
         /// <summary>
-        /// Adds a new database for a company.
+        /// Adds a new database for a companies.
         /// </summary>
-        /// <param name="database">The company database entity to add.</param>
-        /// <returns>The created company database entity.</returns>
+        /// <param name="database">The companies database entity to add.</param>
+        /// <returns>The created companies database entity.</returns>
         public async Task<CompanyDatabase> AddDatabaseAsync(CompanyDatabase database)
         {
             try
             {
-                using (var connection = new SqlConnection(_connection.ConnectionString))
+                using (var connection = new SqliteConnection(_connection.ConnectionString))
                 {
                     connection.Open();
                     var query = "INSERT INTO companydatabase (CompanyId, Name, Type, ConnectionString, IsDefault) " +
@@ -251,15 +252,15 @@ namespace Pml.Infrastructure.Master.Repositories
         }
 
         /// <summary>
-        /// Updates an existing company database.
+        /// Updates an existing companies database.
         /// </summary>
-        /// <param name="database">The company database entity to update.</param>
-        /// <returns>The updated company database entity.</returns>
+        /// <param name="database">The companies database entity to update.</param>
+        /// <returns>The updated companies database entity.</returns>
         public async Task<CompanyDatabase> UpdateDatabaseAsync(CompanyDatabase database)
         {
             try
             {
-                using (var connection = new SqlConnection(_connection.ConnectionString))
+                using (var connection = new SqliteConnection(_connection.ConnectionString))
                 {
                     connection.Open();
                     var query = "UPDATE companydatabase SET Name = @Name, Type = @Type, ConnectionString = @ConnectionString, " +
@@ -276,7 +277,7 @@ namespace Pml.Infrastructure.Master.Repositories
         }
 
         /// <summary>
-        /// Deletes a company database by its ID.
+        /// Deletes a companies database by its ID.
         /// </summary>
         /// <param name="id">The database ID.</param>
         /// <returns>True if the database was deleted; otherwise, false.</returns>
@@ -284,7 +285,7 @@ namespace Pml.Infrastructure.Master.Repositories
         {
             try
             {
-                using (var connection = new SqlConnection(_connection.ConnectionString))
+                using (var connection = new SqliteConnection(_connection.ConnectionString))
                 {
                     connection.Open();
                     var query = "DELETE FROM companydatabase WHERE Id = @Id";

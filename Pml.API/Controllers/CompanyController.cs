@@ -5,7 +5,7 @@ using Pml.Shared.Entities.Models.Master;
 
 namespace Pml.API.Controllers
 {
-    [Authorize]
+    //[Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class CompanyController : ControllerBase

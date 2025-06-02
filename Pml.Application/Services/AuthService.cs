@@ -9,6 +9,9 @@ using Pml.Application.IServices;
 using Pml.Domain.Authentication;
 using Pml.Domain.IRepositories.Master;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Identity.Data;
+using Pml.Shared.DTOs.Client;
+using Pml.Domain.IRepositories.Client;
 
 namespace Pml.Application.Services
 {
@@ -18,8 +21,8 @@ namespace Pml.Application.Services
     public class AuthService : IAuthService
     {
         private readonly ITokenRepository _tokenRepository;
-        private readonly ISystemAdminRepository _systemAdminRepository;
-        private readonly ISystemAdminRoleRepository _systemAdminRoleRepository;
+        private readonly IUserRepository _userRepositiry;
+        private readonly IRoleRepository _roleRepository;
         private readonly ILogger<AuthService> _logger;
 
         /// <summary>
@@ -31,13 +34,9 @@ namespace Pml.Application.Services
         /// <param name="logger">Logger instance.</param>
         public AuthService(
             ITokenRepository tokenRepository,
-            ISystemAdminRepository systemAdminRepository,
-            ISystemAdminRoleRepository systemAdminRoleRepository,
             ILogger<AuthService> logger)
         {
             _tokenRepository = tokenRepository;
-            _systemAdminRepository = systemAdminRepository;
-            _systemAdminRoleRepository = systemAdminRoleRepository;
             _logger = logger;
         }
 
@@ -49,11 +48,11 @@ namespace Pml.Application.Services
         public async Task<AuthResponse> LoginAsync(AuthRequest request)
         {
             // Validate credentials
-            var user = await _systemAdminRepository.GetByUsernameAsync(request.Username);
+            var user = await _userRepositiry.GetByUsernameAsync(request.UserName);
 
             if (user == null)
             {
-                _logger.LogWarning("Login attempt with invalid username: {Username}", request.Username);
+                _logger.LogWarning("Login attempt with invalid username: {Username}", request.UserName);
                 return new AuthResponse
                 {
                     IsSuccess = false,
@@ -64,7 +63,7 @@ namespace Pml.Application.Services
             // Verify password
             if (!VerifyPasswordHash(request.Password, user.Password))
             {
-                _logger.LogWarning("Login attempt with invalid password for user: {Username}", request.Username);
+                _logger.LogWarning("Login attempt with invalid password for user: {Username}", request.UserName);
                 return new AuthResponse
                 {
                     IsSuccess = false,
@@ -73,7 +72,7 @@ namespace Pml.Application.Services
             }
 
             // Get roles for the authenticated user
-            var roles = await _systemAdminRoleRepository.GetRolesByAdminIdAsync(user.Id);
+            var roles = await _roleRepository.GetRolesByUserIdAsync(user.Id);
 
             // Log authentication success (avoid logging sensitive details in production)
             _logger.LogInformation("User {Username} authenticated successfully", user.UserName);
@@ -86,7 +85,7 @@ namespace Pml.Application.Services
             // Update refresh token in database
             user.RefreshToken = refreshToken;
             user.RefreshTokenExpiry = refreshTokenExpiry;
-            await _systemAdminRepository.UpdateAdminAsync(user);
+            await _userRepositiry.UpdateAsync(user);
 
             // Return authentication response
             return new AuthResponse
@@ -117,7 +116,7 @@ namespace Pml.Application.Services
                 var username = principal.Identity.Name;
 
                 // Get user by username
-                var user = await _systemAdminRepository.GetByUsernameAsync(username);
+                var user = await _userRepositiry.GetByUsernameAsync(username);
                 if (user == null)
                 {
                     return new AuthResponse
@@ -139,7 +138,7 @@ namespace Pml.Application.Services
                 }
 
                 // Get current roles for the user
-                var roles = await _systemAdminRoleRepository.GetRolesByAdminIdAsync(user.Id);
+                var roles = await _roleRepository.GetRolesByUserIdAsync(user.Id);
 
                 // Generate new access and refresh tokens
                 var newAccessToken = _tokenRepository.GenerateAccessToken(user.Id, user.UserName, user.UserEmail, roles);
@@ -149,7 +148,7 @@ namespace Pml.Application.Services
                 // Update refresh token in database
                 user.RefreshToken = newRefreshToken;
                 user.RefreshTokenExpiry = refreshTokenExpiry;
-                await _systemAdminRepository.UpdateAdminAsync(user);
+                await _userRepositiry.UpdateAsync(user);
 
                 // Return authentication response
                 return new AuthResponse
@@ -183,7 +182,7 @@ namespace Pml.Application.Services
         /// <returns>True if token was revoked, otherwise false.</returns>
         public async Task<bool> RevokeTokenAsync(string username)
         {
-            var user = await _systemAdminRepository.GetByUsernameAsync(username);
+            var user = await _userRepositiry.GetByUsernameAsync(username);
             if (user == null)
             {
                 return false;
@@ -192,7 +191,7 @@ namespace Pml.Application.Services
             // Revoke refresh token by clearing it and setting expiry to now
             user.RefreshToken = null;
             user.RefreshTokenExpiry = DateTime.UtcNow; // Set to past date
-            await _systemAdminRepository.UpdateAdminAsync(user);
+            await _userRepositiry.UpdateAsync(user);
 
             _logger.LogInformation("Token revoked for user: {Username}", username);
             return true;

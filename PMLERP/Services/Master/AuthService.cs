@@ -6,6 +6,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components.Authorization;
+using Pml.Shared.DTOs.Client;
 using Pml.Shared.DTOs.Master.Authentication;
 using PMLERP.Helpers;
 using PMLERP.IServices.Master;
@@ -32,7 +33,7 @@ namespace PMLERP.Services.Master
         {
             try
             {
-                var loginModel = new AuthRequest { Username = username, Password = password };
+                var loginModel = new AuthRequest { UserName = username, Password = password };
                 var response = await _httpClient.PostAsJsonAsync("SystemAdminAuth/login", loginModel);
 
                 if (!response.IsSuccessStatusCode)

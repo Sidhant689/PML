@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity.Data;
+using Pml.Shared.DTOs.Client;
 using Pml.Shared.DTOs.Master.Authentication;
 
 namespace Pml.Application.IServices

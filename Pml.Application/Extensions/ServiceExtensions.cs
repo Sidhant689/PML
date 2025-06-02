@@ -10,8 +10,11 @@ using Microsoft.IdentityModel.Tokens;
 using Pml.Application.IServices;
 using Pml.Application.Services;
 using Pml.Domain.Authentication;
+using Pml.Domain.IRepositories.Client;
 using Pml.Domain.IRepositories.Master;
 using Pml.Infrastructure.Authentication;
+using Pml.Infrastructure.Client;
+using Pml.Infrastructure.Client.Factory;
 using Pml.Infrastructure.Master;
 using Pml.Infrastructure.Master.Repositories;
 using Pml.Shared.Entities.Settings;
@@ -39,17 +42,18 @@ namespace Pml.Application.Extensions
             // Add PostgreSQL master database context
             services.AddSingleton<MasterDbContext>();
 
-            // Add the DatabaseFactory
-            //services.AddScoped<DatabaseFactory>();
+            // Add the ClientRepositoryFactory
+            services.AddScoped<IClientRepositoryFactory, ClientRepositoryFactory>();
 
             // Register Repositories
-            services.AddScoped<ISystemAdminRepository, SystemAdminRepository>();
-            services.AddScoped<ISystemAdminRoleRepository, SystemAdminRoleRepository>();
             services.AddScoped<ICompanyRepository, CompanyRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IRoleRepository, RoleRepository>();
 
             // Register Services
-            services.AddScoped<ISystemAdminService, SystemAdminService>();
             services.AddScoped<ICompanyService, CompanyService>();
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IRoleService, RoleService>();
 
             // Add HTTP context accessor
             services.AddHttpContextAccessor();

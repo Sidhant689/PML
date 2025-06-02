@@ -1,6 +1,8 @@
 using Pml.Application.Extensions;
 
+
 var builder = WebApplication.CreateBuilder(args);
+SQLitePCL.Batteries_V2.Init();
 
 IConfiguration configuration = new ConfigurationBuilder()
         .SetBasePath(Directory.GetCurrentDirectory())
