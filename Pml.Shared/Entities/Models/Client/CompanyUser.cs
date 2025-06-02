@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using Pml.Shared.Entities.Models.Master;
 
 namespace Pml.Shared.Entities.Models.Client
 {
@@ -15,6 +16,12 @@ namespace Pml.Shared.Entities.Models.Client
         [ForeignKey("Role")]
         public int UserRoleCode { get; set; }
         public virtual Role Role { get; set; }
+
+        [ForeignKey("Company")]
+        public int CompanyId { get; set; }
+
+        public virtual Company Company { get; set; }
+
     }
     public class Role
     {

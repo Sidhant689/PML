@@ -2,6 +2,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -29,10 +30,10 @@ namespace Pml.Application.Extensions
             services.AddSingleton(sp =>
                 sp.GetRequiredService<IOptions<DatabaseSettings>>().Value);
 
-            // Register NpgsqlConnection factory
-            services.AddTransient<SqlConnection>(sp => {
+            // Register SqliteConnection factory
+            services.AddTransient<SqliteConnection>(sp => {
                 var dbSettings = sp.GetRequiredService<DatabaseSettings>();
-                return new SqlConnection(dbSettings.MasterConnectionString);
+                return new SqliteConnection(dbSettings.MasterConnectionString);
             });
 
             // Add PostgreSQL master database context

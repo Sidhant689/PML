@@ -59,6 +59,8 @@ namespace Pml.Infrastructure.Client
                 DatabaseType.Oracle => new OracleRepository(defaultDatabase.ConnectionString),
                 DatabaseType.MsAccess => new AccessRepository(defaultDatabase.ConnectionString),
                 DatabaseType.FoxPro => new FoxProRepository(defaultDatabase.ConnectionString),
+                DatabaseType.SQLite => new SQLiteRepository(defaultDatabase.ConnectionString),
+                DatabaseType.PostgreSQL => new PostgreSqlRepository(defaultDatabase.ConnectionString),
                 _ => throw new NotSupportedException($"Database type {defaultDatabase.Type} is not supported")
             };
         }
