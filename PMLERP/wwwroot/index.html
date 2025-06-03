@@ -28,29 +28,34 @@
 
     <script src="_framework/blazor.webview.js" autostart="false"></script>
     <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            window.applySavedTheme();
+        });
         function setTheme(isDark) {
-            debugger;
+            debugger
             const link = document.getElementById('syncfusion-theme');
             if (link) {
                 link.href = isDark
                     ? '_content/Syncfusion.Blazor.Themes/bootstrap5.3-dark.css'
                     : '_content/Syncfusion.Blazor.Themes/bootstrap5.3.css';
             }
-
             document.body.classList.toggle('dark-theme', isDark);
-            //localStorage.setItem('isDark', isDark);
-            localStorage.setItem("theme", isDark ? "dark" : "light");
+            // Store using the same key as Blazor component
+            localStorage.setItem('jewelErpDarkMode', isDark);
         }
 
         window.applySavedTheme = () => {
-            const saved = localStorage.getItem('isDark') === 'true';
+            // Check the same key that Blazor component uses
+            const saved = localStorage.getItem('jewelErpDarkMode') === 'true';
             setTheme(saved);
             return saved;
         };
 
         window.toggleTheme = () => {
-            const isDark = document.body.classList.contains('dark-theme');
-            setTheme(!isDark);
+            // Get current state from the same localStorage key
+            const isDark = localStorage.getItem('jewelErpDarkMode') === 'true';
+            setTheme(isDark);
         };
     </script>
 

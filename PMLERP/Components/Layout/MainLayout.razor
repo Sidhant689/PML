@@ -74,7 +74,9 @@
 <!-- Modern Layout with Enhanced Sidebar -->
 <div class="app-layout @(isDarkMode ? "dark-mode" : "")">
     <!-- Elegant Sidebar Navigation -->
+    <div class="@SidebarCssClass">
         <NavMenu IsCollapsed="@isCollapsed" />
+    </div>
 
     <!-- Backdrop for mobile -->
     @if (sidebarExpanded && isMobile)
@@ -133,11 +135,8 @@
         // On first load, check device
         CheckIsMobile();
         
-        // On mobile, the sidebar is hidden by default
-        if (isMobile)
-        {
-            sidebarExpanded = false;
-        }
+        // Set initial state based on device type
+        SetInitialSidebarState();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -186,6 +185,20 @@
 #endif
     }
 
+    private void SetInitialSidebarState()
+    {
+        if (isMobile)
+        {
+            sidebarExpanded = false;
+            isCollapsed = false; // On mobile, we don't use collapsed state
+        }
+        else
+        {
+            sidebarExpanded = true;
+            isCollapsed = false; // Start expanded on desktop
+        }
+    }
+
     private async Task CheckIsMobileJsAsync()
     {
         if (jsRuntime != null)
@@ -199,11 +212,23 @@
                 // Only update and re-render if the value changed
                 if (newIsMobile != isMobile)
                 {
+                    var wasDesktop = !isMobile;
                     isMobile = newIsMobile;
-                    if (isMobile)
+                    
+                    // Reset sidebar state when switching between mobile and desktop
+                    if (isMobile && wasDesktop)
                     {
+                        // Switching to mobile
                         sidebarExpanded = false;
+                        isCollapsed = false;
                     }
+                    else if (!isMobile && !wasDesktop)
+                    {
+                        // Switching to desktop
+                        sidebarExpanded = true;
+                        isCollapsed = false;
+                    }
+                    
                     StateHasChanged();
                 }
             }
@@ -224,12 +249,12 @@
             if (isMobile)
             {
                 // Mobile behavior: completely hide/show sidebar
-                return sidebarExpanded ? $"{baseClasses} show" : baseClasses;
+                return sidebarExpanded ? $"{baseClasses} show mobile-sidebar" : $"{baseClasses} mobile-sidebar";
             }
             else
             {
                 // Desktop behavior: collapse to icon-only or expand
-                return isCollapsed ? $"{baseClasses} collapsed" : baseClasses;
+                return isCollapsed ? $"{baseClasses} collapsed desktop-sidebar" : $"{baseClasses} desktop-sidebar";
             }
         }
     }
@@ -243,10 +268,14 @@
         }
         else
         {
-            sidebarExpanded = !sidebarExpanded;
-            // On desktop: collapse/expand sidebar
+            // On desktop: toggle between expanded and collapsed
             isCollapsed = !isCollapsed;
+            // Keep sidebarExpanded true on desktop to maintain proper icon state
+            sidebarExpanded = !sidebarExpanded;
         }
+        
+        // Force re-render
+        StateHasChanged();
     }
 
     private void ToggleUserMenu()
@@ -374,12 +403,23 @@
     {
         if (isMobile != newIsMobile)
         {
+            var wasDesktop = !isMobile;
             isMobile = newIsMobile;
-            // If switching to mobile, collapse sidebar by default
-            if (isMobile)
+            
+            // Reset sidebar state when switching between mobile and desktop
+            if (isMobile && wasDesktop)
             {
+                // Switching to mobile
                 sidebarExpanded = false;
+                isCollapsed = false;
             }
+            else if (!isMobile && !wasDesktop)
+            {
+                // Switching to desktop
+                sidebarExpanded = true;
+                isCollapsed = false;
+            }
+            
             StateHasChanged();
         }
     }
@@ -615,7 +655,7 @@
 
     /* More compact Page Title and Breadcrumb */
 .page-title-bar {
-    padding: 0.8rem; /* Reduced from 1.5rem to 1rem */
+    padding: 0.35rem; /* Reduced from 1.5rem to 1rem */
     border-bottom: 1px solid var(--border-color);
     background-color: var(--bg-secondary);
 }
